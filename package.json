@@ -1,0 +1,32 @@
+{
+  "name": "checkpoint3-document-manager",
+  "version": "1.0.0",
+  "description": "a document management application",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andela-oakinseye/cp3-document-manager.git"
+  },
+  "keywords": [
+    "document",
+    "checkpoint",
+    "andela",
+    "olawale-akinseye"
+  ],
+  "author": "Olawale Akinseye",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andela-oakinseye/cp3-document-manager/issues"
+  },
+  "homepage": "https://github.com/andela-oakinseye/cp3-document-manager#readme",
+  "devDependencies": {
+    "eslint": "^3.13.1",
+    "eslint-config-airbnb": "^14.0.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^3.0.2",
+    "eslint-plugin-react": "^6.9.0"
+  }
+}
