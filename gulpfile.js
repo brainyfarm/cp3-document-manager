@@ -4,5 +4,5 @@ const babel = require('gulp-babel');
 gulp.task('babel', () => {
   gulp.src('server/**/*.js')
   .pipe(babel())
-  .pipe(gulp.dest('dist/server'));
+  .pipe(gulp.dest('/dist/server'));
 });
