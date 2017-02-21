@@ -22,7 +22,6 @@ const helper = {
     lastname: faker.name.lastName(),
     email: faker.internet.email(),
     password: faker.internet.password(),
-    roleId: 1
   },
   sampleUser: {
     username: faker.internet.userName(),
@@ -30,6 +29,12 @@ const helper = {
     lastname: faker.name.lastName(),
     email: faker.internet.email(),
     password: faker.internet.password(),
+  },
+  noEmailUser: {
+    username: faker.internet.userName(),
+    firstname: faker.name.firstName(),
+    lastname: faker.name.lastName(),
+    password: faker.internet.password()
   },
   sampleUser2: {
     username: faker.internet.userName(),

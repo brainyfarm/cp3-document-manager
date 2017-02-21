@@ -17,6 +17,9 @@ userRoutes.route('/:id/documents')
   .get(authenticate, userCtrl.getUserDocumentById);
 
 userRoutes.route('/login')
-  .post(userCtrl.userLogin);
+  .post(userCtrl.userLogin)
+  .get((req, res) => {
+    res.status(200).send('It works');
+  });
 
 export default userRoutes;
