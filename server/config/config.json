@@ -1,8 +1,8 @@
 {
   "development": {
-    "username": "root",
+    "username": "postgres",
     "password": null,
-    "database": "document",
+    "database": "dms",
     "host": "localhost",
     "dialect": "postgres"
   },
