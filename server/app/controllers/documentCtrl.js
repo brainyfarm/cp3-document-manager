@@ -1,5 +1,5 @@
 import db from '../models/index';
-import * as auth from '../helpers/auth-helper';
+import * as auth from '../helpers/AuthHelper';
 
 const createDocument = (req, res) => {
   db.Document
@@ -9,8 +9,8 @@ const createDocument = (req, res) => {
       owner: req.user.userId,
       access: req.body.access || 'public'
     })
-    .then(document => res.send({ message: 'Document Created', document }))
-    .catch(error => res.send({ message: 'Error Creating Document', error }));
+    .then(document => res.status(201).json({ message: 'Document Created', document }))
+    .catch(error => res.json({ message: 'Error Creating Document', error }));
 };
 
 const getDocuments = (req, res) => {
@@ -68,6 +68,7 @@ const updateDocumentById = (req, res) => {
   db.Document
     .findById(requestedDocumentId)
     .then((data) => {
+      console.log(data);
       if (data.owner == req.user.userId || auth.userIsAdmin(req.user.role)) {
         data.update({
           title: req.body.title || data.title,
@@ -103,7 +104,7 @@ const deleteDocumentById = (req, res) => {
       if (data.owner == req.user.userId || auth.userIsAdmin(req.user.role)) {
         data.destroy()
           .then((response) => {
-            res.status(201).send({
+            res.status(201).json({
               message: 'Document has been deleted'
             });
           })

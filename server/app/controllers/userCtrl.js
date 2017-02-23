@@ -1,15 +1,15 @@
 import bcrypt from 'bcrypt-nodejs';
 import * as jwt from 'jsonwebtoken';
 
-import * as auth from '../helpers/auth-helper';
+import * as auth from '../helpers/AuthHelper';
 import db from '../models/index';
 
 
 const userLogin = (req, res) => {
   db.User.findOne({
-    where: {
-      username: req.body.username
-    }
+    where: { $or: {
+      username: req.body.username, email: req.body.email
+    } }
   }).then((user) => {
     if (!user) {
       return res.status(400).send({
@@ -18,9 +18,15 @@ const userLogin = (req, res) => {
     }
     if (bcrypt.compareSync(req.body.password, user.password)) {
       const token = jwt.sign(user.get({ plain: true }), 'secret', {
-        expiresIn: '4 days'
+        expiresIn: '14 days'
       });
-      return res.status(200).send(token);
+      return res.status(200).json({
+        success: true,
+        message: 'Login Successful',
+        email: user.email,
+        userId: user.id,
+        token
+      });
     }
     return res.status(502).send({
       message: 'unauthorized access'
@@ -32,7 +38,11 @@ const userLogin = (req, res) => {
 };
 
 const userLogout = (req, res) => {
-  // user Logout action
+  res.status(200).json({
+    // Blacklist the token here
+    success: true,
+    message: 'Logout successful'
+  });
 };
 
 const createUser = (req, res) => {
@@ -46,31 +56,42 @@ const createUser = (req, res) => {
     })
     .then((user) => {
       const token = jwt.sign(user.get({ plain: true }), 'secret', {
-        expiresIn: '4 days'
+        expiresIn: '14 days'
       });
-      return res.status(201).send({
+      return res.status(201).json({
+        success: true,
         message: 'User account created',
+        email: user.email,
+        roleId: user.role,
         token
       });
     })
     .catch(error =>
-      res.status(400).send({ message: error })
+      res.status(500).json({ success: false, message: error.message })
     );
 };
 
 const getUsers = (req, res) => {
   if (!auth.userIsAdmin(req.user.role)) {
-    return res.status(502).send({
+    return res.status(403).json({
+      success: false,
       message: 'unauthorized access'
     });
   }
   db.User.findAll()
     .then((data) => {
-      return res.status(200).send(data);
+      if (data.length) {
+        res.status(200).json(data);
+      } else {
+        return res.status(200).json({
+          success: true
+        });
+      }
     })
     .catch((error) => {
-      res.status(404).send({
-        message: error
+      res.status(500).json({
+        success: false,
+        message: error.message
       });
     });
 };
@@ -106,15 +127,17 @@ const findUserById = (req, res) => {
 const updateUserData = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(502).send({
-      message: 'You have no permission to edit'
+    return res.status(401).json({
+      success: false,
+      message: 'unauthorized access'
     });
   }
   db.User.findById(dataId)
     .then((data) => {
       if (!data) {
-        res.status(404).send({
-          message: 'User not found'
+        res.status(404).json({
+          success: false,
+          message: 'not found'
         });
       }
       data.update({
@@ -126,24 +149,25 @@ const updateUserData = (req, res) => {
       })
         .then((result) => {
           if (!result) {
-            res.status(400).send({
+            res.status(400).json({
+              success: false,
               message: 'Unable to modify'
             });
           }
-          res.status(201).send(
+          res.status(201).json(
             data
           );
         })
         .catch((error) => {
-          res.status(400).send(
-            {
-              message: error
-            }
-          );
+          res.status(400).json({
+            success: false,
+            message: error
+          });
         });
     })
     .catch((error) => {
-      res.status(400).send({
+      res.status(400).json({
+        success: false,
         message: error
       });
     });
@@ -152,25 +176,29 @@ const updateUserData = (req, res) => {
 const deleteUser = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(502).send({
+    return res.status(401).json({
+      success: false,
       message: 'unauthorized access'
     });
   }
   db.User.findById(dataId)
     .then((data) => {
       if (!data) {
-        res.status(404).send({
-          message: 'User does not exist'
+        res.status(404).json({
+          success: false,
+          message: 'not found'
         });
       }
       data.destroy()
         .then(() => {
-          res.status(201).send({
+          res.status(201).json({
+            success: true,
             message: 'User account has been deleted'
           });
         })
         .catch((error) => {
-          res.status(400).send({
+          res.status(400).json({
+            success: false,
             message: error
           });
         });
@@ -189,10 +217,11 @@ const getUserDocumentById = (req, res) => {
     db.Document
       .findAll(query)
       .then((data) => {
-        return res.status(200).send(data);
+        return res.status(200).json(data);
       })
       .catch((error) => {
-        return res.status(400).send({
+        return res.status(400).json({
+          success: false,
           message: error.message
         });
       });
@@ -208,15 +237,17 @@ const getUserDocumentById = (req, res) => {
       })
       .then((data) => {
         if (data.length) {
-          res.status(200).send(data);
+          res.status(200).json(data);
         } else {
-          return res.status(404).send({
-            message: 'No data found'
+          return res.status(404).json({
+            success: false,
+            message: 'no data'
           });
         }
       })
       .catch((error) => {
-        return res.status(400).send({
+        return res.status(400).json({
+          success: false,
           message: error.message
         });
       });

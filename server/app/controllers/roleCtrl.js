@@ -1,5 +1,5 @@
 import db from '../models/index';
-import * as auth from '../helpers/auth-helper';
+import * as auth from '../helpers/AuthHelper';
 
 const createRole = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
