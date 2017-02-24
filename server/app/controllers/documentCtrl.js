@@ -10,25 +10,24 @@ const createDocument = (req, res) => {
       access: req.body.access || 'public'
     })
     .then(document => res.status(201).json({ message: 'Document Created', document }))
-    .catch(error => res.json({ message: 'Error Creating Document', error }));
+    .catch(error => res.status(500).json({ message: 'Error Creating Document', error }));
 };
 
 const getDocuments = (req, res) => {
-  if (req.user.role == 1) {
-    return res.status(403).send({
+  if (!auth.userIsAdmin(req.user.role)) {
+    return res.status(401).send({
       message: 'unauthorized access'
     });
   }
   db.Document
     .findAll()
     .then((data) => {
-      if (data) {
+      if (data.length) {
         return res.status(200).send(data);
-      } else {
-        return res.status(404).send({
-          message: 'Unable to fetch document'
-        });
       }
+      return res.status(404).send({
+        message: 'Unable to fetch document'
+      });
     })
     .catch((error) => {
       res.status(400).send({
@@ -41,26 +40,28 @@ const findDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
   db.Document
     .findById(requestedDocumentId)
-      .then((data) => {
-        if (data) {
-          if (auth.userIsAdmin(req.user.role) || data.owner == req.user.userId || data.access == 'public') {
-            res.status(200).send(data);
-          } else {
-            return res.status(403).send({
-              message: 'unauthorized access'
-            });
-          }
+    .then((data) => {
+      if (data) {
+        if (auth.userIsAdmin(req.user.role)
+          || data.owner === String(req.user.userId)
+          || data.access === 'public') {
+          res.status(200).send(data);
         } else {
-          res.status(404).send({
-            message: 'Document does not exist'
+          return res.status(401).send({
+            message: 'unauthorized access'
           });
         }
-      })
-      .catch((error) => {
-        res.status(400).send({
-          message: error.message
+      } else {
+        res.status(404).send({
+          message: 'Document does not exist'
         });
+      }
+    })
+    .catch((error) => {
+      res.status(400).send({
+        message: error.message
       });
+    });
 };
 
 const updateDocumentById = (req, res) => {
@@ -68,8 +69,7 @@ const updateDocumentById = (req, res) => {
   db.Document
     .findById(requestedDocumentId)
     .then((data) => {
-      console.log(data);
-      if (data.owner == req.user.userId || auth.userIsAdmin(req.user.role)) {
+      if (data.owner === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
         data.update({
           title: req.body.title || data.title,
           content: req.body.content || data.content,
@@ -84,16 +84,15 @@ const updateDocumentById = (req, res) => {
             });
           });
       } else {
-        res.status(403).send({
+        res.status(401).send({
           message: 'unauthorized access'
         });
       }
     })
-    .catch((error) => {
-      return res.send({
+    .catch(error =>
+      res.send({
         message: error.message
-      });
-    });
+      }));
 };
 
 const deleteDocumentById = (req, res) => {
@@ -101,10 +100,10 @@ const deleteDocumentById = (req, res) => {
   db.Document
     .findById(requestedDocumentId)
     .then((data) => {
-      if (data.owner == req.user.userId || auth.userIsAdmin(req.user.role)) {
+      if (data.owner === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
         data.destroy()
-          .then((response) => {
-            res.status(201).json({
+          .then(() => {
+            res.status(201).send({
               message: 'Document has been deleted'
             });
           })
@@ -114,16 +113,15 @@ const deleteDocumentById = (req, res) => {
             });
           });
       } else {
-        res.status(403).send({
+        res.status(401).send({
           message: 'unauthorized access'
         });
       }
     })
-    .catch((error) => {
-      return res.send({
+    .catch(error =>
+      res.send({
         message: error.message
-      });
-    });
+      }));
 };
 
 export {

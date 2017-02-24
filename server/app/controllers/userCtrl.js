@@ -7,12 +7,14 @@ import db from '../models/index';
 
 const userLogin = (req, res) => {
   db.User.findOne({
-    where: { $or: {
-      username: req.body.username, email: req.body.email
-    } }
+    where: {
+      $or: {
+        username: req.body.username, email: req.body.email
+      }
+    }
   }).then((user) => {
     if (!user) {
-      return res.status(400).send({
+      return res.status(403).send({
         message: 'User does not exist'
       });
     }
@@ -28,20 +30,9 @@ const userLogin = (req, res) => {
         token
       });
     }
-    return res.status(502).send({
+    return res.status(401).send({
       message: 'unauthorized access'
     });
-  })
-    .catch((error) => {
-      return res.status(400).send(error.message);
-    });
-};
-
-const userLogout = (req, res) => {
-  res.status(200).json({
-    // Blacklist the token here
-    success: true,
-    message: 'Logout successful'
   });
 };
 
@@ -65,9 +56,11 @@ const createUser = (req, res) => {
         roleId: user.role,
         token
       });
-    })
-    .catch(error =>
-      res.status(500).json({ success: false, message: error.message })
+    }).catch(error =>
+      res.status(500).json({
+        success: false,
+        error: error.message
+      })
     );
 };
 
@@ -82,10 +75,6 @@ const getUsers = (req, res) => {
     .then((data) => {
       if (data.length) {
         res.status(200).json(data);
-      } else {
-        return res.status(200).json({
-          success: true
-        });
       }
     })
     .catch((error) => {
@@ -99,7 +88,7 @@ const getUsers = (req, res) => {
 const findUserById = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(502).send({
+    return res.status(403).send({
       message: 'You have no permission to view'
     });
   }
@@ -111,23 +100,20 @@ const findUserById = (req, res) => {
           message: 'User not found'
         });
       }
-      res.status(200).send({
+      return res.status(200).json({
         username: data.username,
         email: data.email,
         firstname: data.firstname,
         lastname: data.lastname,
         joined: data.createdAt
       });
-    })
-    .catch((error) => {
-      res.status(400).send({ message: error });
     });
 };
 
 const updateUserData = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(401).json({
+    return res.status(403).json({
       success: false,
       message: 'unauthorized access'
     });
@@ -154,7 +140,7 @@ const updateUserData = (req, res) => {
               message: 'Unable to modify'
             });
           }
-          res.status(201).json(
+          return res.status(201).json(
             data
           );
         })
@@ -164,12 +150,6 @@ const updateUserData = (req, res) => {
             message: error
           });
         });
-    })
-    .catch((error) => {
-      res.status(400).json({
-        success: false,
-        message: error
-      });
     });
 };
 
@@ -184,7 +164,7 @@ const deleteUser = (req, res) => {
   db.User.findById(dataId)
     .then((data) => {
       if (!data) {
-        res.status(404).json({
+        return res.status(404).json({
           success: false,
           message: 'not found'
         });
@@ -194,12 +174,6 @@ const deleteUser = (req, res) => {
           res.status(201).json({
             success: true,
             message: 'User account has been deleted'
-          });
-        })
-        .catch((error) => {
-          res.status(400).json({
-            success: false,
-            message: error
           });
         });
     });
@@ -213,17 +187,15 @@ const getUserDocumentById = (req, res) => {
       owner: requestId
     }
   };
-  if (userId == String(requestId) || auth.userIsAdmin(req.user.role)) {
+  if (String(userId) === String(requestId)
+    || auth.userIsAdmin(req.user.role)) {
     db.Document
       .findAll(query)
       .then((data) => {
-        return res.status(200).json(data);
-      })
-      .catch((error) => {
-        return res.status(400).json({
-          success: false,
-          message: error.message
-        });
+        if (data.length) {
+          return res.status(200).json(data);
+        }
+        res.status(404).json('no document');
       });
   } else {
     db.Document
@@ -244,19 +216,12 @@ const getUserDocumentById = (req, res) => {
             message: 'no data'
           });
         }
-      })
-      .catch((error) => {
-        return res.status(400).json({
-          success: false,
-          message: error.message
-        });
       });
   }
 };
 
 export {
   userLogin,
-  userLogout,
   createUser,
   getUsers,
   findUserById,
