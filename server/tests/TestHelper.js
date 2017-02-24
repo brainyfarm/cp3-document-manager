@@ -22,6 +22,11 @@ const helper = {
     title: 'Guests'
   },
 
+  fakeUser: {
+    email: 'fake@fake.fake',
+    password: '43rd34rdwed'
+  },
+
   aUser: {
     username: 'brainyfarm',
     firstname: 'Olawale',
@@ -122,7 +127,26 @@ const defaultUsers = [
     email: 'ordinary@dms.com',
     password: bcrypt.hashSync('password', bcrypt.genSaltSync(8)),
     role: 1
+  },
+  {
+    id: 3,
+    username: 'brainy',
+    firstname: 'Brainy',
+    lastname: 'Farm',
+    email: 'brainy@dms.com',
+    password: bcrypt.hashSync('password', bcrypt.genSaltSync(8)),
+    role: 1
+  },
+  {
+    id: 5,
+    username: 'james',
+    firstname: 'James',
+    lastname: 'Swepps',
+    email: 'james@dms.com',
+    password: bcrypt.hashSync('password', bcrypt.genSaltSync(8)),
+    role: 1
   }
+
 ];
 
 const defaultDocuments = [
@@ -145,7 +169,14 @@ const defaultDocuments = [
     title: faker.company.catchPhrase(),
     content: faker.company.catchPhrase(),
     access: 'private',
-    owner: 2
+    owner: 1
+  },
+  {
+    id: 11,
+    title: faker.company.catchPhrase(),
+    content: faker.company.catchPhrase(),
+    access: 'public',
+    owner: 4
   }];
 
 const defaultRoles = [
@@ -156,16 +187,19 @@ const defaultRoles = [
   {
     id: 2,
     title: 'Admin'
+  },
+
+  {
+    id: 3,
+    title: 'Content Manager'
   }
 ];
 
 /**
  * populate Default Data
- * self invoking
  * @return {undefined}
  */
 const populateData = () => {
-  console.log(defaultDocuments, defaultUsers, defaultRoles);
   db.Role.bulkCreate(defaultRoles);
   db.User.bulkCreate(defaultUsers);
   db.Document.bulkCreate(defaultDocuments);
