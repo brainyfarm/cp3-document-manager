@@ -4,11 +4,13 @@
   "description": "a document management application",
   "main": "server.js",
   "scripts": {
-    "cover": "istanbul cover _mocha server/tests",
+    "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
+    "ist": "istanbul cover npm run test-server",
     "start": "babel-watch server",
     "migrate": "sequelize db:migrate",
-    "test-server": "NODE_ENV=test mocha --compilers js:babel-core/register server/tests/**/*.js"
+    "generate:data": "NODE_ENV=test babel-node server/tests/TestHelper",
+    "test-server": "npm run generate:data && NODE_ENV=test _mocha --compilers js:babel-core/register server/tests/**/*.js"
   },
   "repository": {
     "type": "git",
