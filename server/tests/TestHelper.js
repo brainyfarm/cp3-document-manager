@@ -177,6 +177,13 @@ const defaultDocuments = [
     content: faker.company.catchPhrase(),
     access: 'public',
     owner: 4
+  },
+  {
+    id: 12,
+    title: faker.company.catchPhrase(),
+    content: faker.company.catchPhrase(),
+    access: 'public',
+    owner: 4
   }];
 
 const defaultRoles = [
