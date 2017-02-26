@@ -129,4 +129,30 @@ describe('DOCUMENT ROUTE TESTS', () => {
           });
       });
   });
+
+  it('should ensure that a admin can delete a document', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.adminUser)
+      .end((err, res) => {
+        makeRequest.delete('/documents/10')
+          .set('access-token', res.body.token)
+          .end((error, response) => {
+            expect(response.status).to.equal(201);
+            done();
+          });
+      });
+  });
+
+  it('should ensure that a admin can delete a document', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.ordinaryUserLogin)
+      .end((err, res) => {
+        makeRequest.delete('/documents/12')
+          .set('access-token', res.body.token)
+          .end((error, response) => {
+            expect(response.status).to.equal(401);
+            done();
+          });
+      });
+  });
 });
