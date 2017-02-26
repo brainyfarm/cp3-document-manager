@@ -4,7 +4,13 @@ import * as jwt from 'jsonwebtoken';
 import * as auth from '../helpers/AuthHelper';
 import db from '../models/index';
 
-
+/**
+ * userLogin
+ * Login a user
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const userLogin = (req, res) => {
   db.User.findOne({
     where: {
@@ -36,6 +42,13 @@ const userLogin = (req, res) => {
   });
 };
 
+/**
+ * createUser
+ * Create a new user
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const createUser = (req, res) => {
   db.User
     .create({
@@ -64,6 +77,13 @@ const createUser = (req, res) => {
     );
 };
 
+/**
+ * getUsers
+ * Fetch and return all users
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getUsers = (req, res) => {
   if (!auth.userIsAdmin(req.user.role)) {
     return res.status(403).json({
@@ -85,6 +105,13 @@ const getUsers = (req, res) => {
     });
 };
 
+/**
+ * findUserById
+ * Fetch and return a specific user's data
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const findUserById = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
@@ -110,6 +137,13 @@ const findUserById = (req, res) => {
     });
 };
 
+/**
+ * updateUserData
+ * update a specified user's data
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const updateUserData = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
@@ -153,6 +187,13 @@ const updateUserData = (req, res) => {
     });
 };
 
+/**
+ * deleteUser
+ * Fetch and delete a user's account
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const deleteUser = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
@@ -179,6 +220,13 @@ const deleteUser = (req, res) => {
     });
 };
 
+/**
+ * getUserDocumentById
+ * Fetch and return all a specified user's documents
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getUserDocumentById = (req, res) => {
   const userId = req.user.userId;
   const requestId = req.params.id;

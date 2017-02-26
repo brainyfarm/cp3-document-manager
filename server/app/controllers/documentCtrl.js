@@ -1,6 +1,13 @@
 import db from '../models/index';
 import * as auth from '../helpers/AuthHelper';
 
+/**
+ * createDocument
+ * Create a new document
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const createDocument = (req, res) => {
   db.Document
     .create({
@@ -13,6 +20,13 @@ const createDocument = (req, res) => {
     .catch(error => res.status(500).json({ message: 'Error Creating Document', error }));
 };
 
+/**
+ * getDocuments
+ * Fetch and return all documents in the database
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getDocuments = (req, res) => {
   if (!auth.userIsAdmin(req.user.role)) {
     return res.status(401).send({
@@ -36,6 +50,13 @@ const getDocuments = (req, res) => {
     });
 };
 
+/**
+ * findDocumentById
+ * Find a document by specifying the id as a parameter
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const findDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
   db.Document
@@ -64,6 +85,13 @@ const findDocumentById = (req, res) => {
     });
 };
 
+/**
+ * updateDocumentById
+ * Update content of a specific document
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const updateDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
   db.Document
@@ -95,6 +123,13 @@ const updateDocumentById = (req, res) => {
       }));
 };
 
+/**
+ * deleteDocumentById
+ * Delete a specific document
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const deleteDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
   db.Document

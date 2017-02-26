@@ -1,6 +1,13 @@
 import db from '../models/index';
 import * as auth from '../helpers/AuthHelper';
 
+/**
+ * createRole
+ * Create a new role
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const createRole = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
     db.Role
@@ -17,6 +24,13 @@ const createRole = (req, res) => {
   }
 };
 
+/**
+ * deleteRoleById
+ * Delete a specific role
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const deleteRoleById = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
     db.Role
@@ -37,6 +51,13 @@ const deleteRoleById = (req, res) => {
   }
 };
 
+/**
+ * getAllRoles
+ * Fetch and return all available roles
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getAllRoles = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
     db.Role
