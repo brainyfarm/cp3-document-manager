@@ -13,4 +13,7 @@ documentRoutes.route('/:id')
   .put(authenticate, documentCtrl.updateDocumentById)
   .delete(authenticate, documentCtrl.deleteDocumentById);
 
+documentRoutes.route('/search/:searchterm')
+  .get(authenticate, documentCtrl.searchDocument);
+
 export default documentRoutes;
