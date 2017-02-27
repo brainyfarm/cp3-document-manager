@@ -4,9 +4,9 @@ node_js:
 
 before_script:
 - npm install
-- npm run migrate:test
 - psql -c 'create database dms_test;' -U postgres
 - dropdb --if-exists dms_test && createdb dms_test
+- npm run migrate:test
 - npm run coveralls
 
 after_success:
