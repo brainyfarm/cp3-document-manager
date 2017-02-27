@@ -16,6 +16,9 @@ userRoutes.route('/:id')
 userRoutes.route('/:id/documents')
   .get(authenticate, userCtrl.getUserDocumentById);
 
+userRoutes.route('/search/:searchTerm')
+  .get(authenticate, userCtrl.searchUsers);
+
 userRoutes.route('/login')
   .post(userCtrl.userLogin);
 
