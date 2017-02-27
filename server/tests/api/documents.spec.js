@@ -11,7 +11,7 @@ const expect = chai.expect;
 describe('DOCUMENT ROUTE TESTS', () => {
   it('should successfully create a document', (done) => {
     makeRequest.post('/users/login')
-      .send({ email: helper.adminUser.email, password: 'password' })
+      .send(helper.ordinaryUserLogin)
       .end((err, res) => {
         makeRequest.post('/documents')
           .set('access-token', res.body.token)
