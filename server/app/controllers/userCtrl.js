@@ -268,6 +268,58 @@ const getUserDocumentById = (req, res) => {
   }
 };
 
+/**
+ * searchUsers
+ * Search for users by keyword
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
+const searchUsers = (req, res) => {
+  const searchTerm = req.params.searchTerm;
+  const userSearchQuery = {
+    where: {
+      $or: {
+        lastname: {
+          $ilike: `%${searchTerm}%`
+        },
+        firstname: {
+          $ilike: `%${searchTerm}%`
+        },
+        username: {
+          $ilike: `%${searchTerm}%`
+        }
+      }
+    }
+  };
+  if (!auth.userIsAdmin(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'unauthorized access'
+    });
+  }
+  db.User
+    .findAll(userSearchQuery)
+    .then((searchResult) => {
+      if (searchResult.length) {
+        return res.status(200).json({
+          success: true,
+          searchResult
+        });
+      }
+      return res.status(404).json({
+        success: true,
+        searchResult: null
+      });
+    })
+    .catch(error =>
+      res.status(500).json({
+        success: false,
+        error: error.message
+      })
+    );
+};
+
 export {
   userLogin,
   createUser,
@@ -275,5 +327,6 @@ export {
   findUserById,
   updateUserData,
   deleteUser,
+  searchUsers,
   getUserDocumentById
 };

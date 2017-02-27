@@ -29,7 +29,7 @@ const createDocument = (req, res) => {
  */
 const getDocuments = (req, res) => {
   if (!auth.userIsAdmin(req.user.role)) {
-    return res.status(401).send({
+    return res.status(403).send({
       message: 'unauthorized access'
     });
   }
@@ -112,7 +112,7 @@ const updateDocumentById = (req, res) => {
             });
           });
       } else {
-        res.status(401).send({
+        res.status(403).send({
           message: 'unauthorized access'
         });
       }
@@ -148,7 +148,7 @@ const deleteDocumentById = (req, res) => {
             });
           });
       } else {
-        res.status(401).send({
+        res.status(403).send({
           message: 'unauthorized access'
         });
       }
@@ -159,10 +159,73 @@ const deleteDocumentById = (req, res) => {
       }));
 };
 
+/**
+ * searchDocument
+ * Search for documents by keyword
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
+const searchDocument = (req, res) => {
+  const searchTerm = req.params.searchterm;
+  const documentSearchQuery = auth.userIsAdmin(req.user.role) ?
+  {
+    where: {
+      $or: {
+        title: {
+          $iLike: `%${searchTerm}%`
+        },
+        content: {
+          $iLike: `%${searchTerm}%`
+        }
+      }
+    }
+  } : {
+    where: {
+      $and: {
+        $or: {
+          owner: String(req.user.userId),
+          access: 'public'
+        },
+        $and: {
+          $or: {
+            title: {
+              $iLike: `%${searchTerm}%`
+            },
+            content: {
+              $iLike: `%${searchTerm}%`
+            }
+          }
+        }
+      }
+    }
+  };
+  db.Document
+    .findAll(documentSearchQuery)
+    .then((searchResult) => {
+      if (searchResult.length) {
+        return res.status(200).json({
+          success: true,
+          searchResult
+        });
+      }
+      return res.status(404).json({
+        success: true,
+        message: 'no result'
+      });
+    })
+    .catch(error =>
+      res.status(500).json({
+        success: false,
+        message: error.message
+      })
+    );
+};
 export {
   createDocument,
   getDocuments,
   findDocumentById,
   updateDocumentById,
-  deleteDocumentById
+  deleteDocumentById,
+  searchDocument
 };
