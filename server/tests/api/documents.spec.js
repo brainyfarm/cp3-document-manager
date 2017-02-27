@@ -23,6 +23,15 @@ describe('DOCUMENT ROUTE TESTS', () => {
       });
   });
 
+  it('should prevent a user without a token from creating documents', (done) => {
+    makeRequest.post('/documents')
+      .send({ title: 'Simple Document', content: 'Body of the document' })
+      .end((error, response) => {
+        expect(response.status).to.equal(403);
+        done();
+      });
+  });
+
   it('should fail to create a document if title is not supplied', (done) => {
     makeRequest.post('/users/login')
       .send(helper.ordinaryUserLogin)
@@ -89,6 +98,19 @@ describe('DOCUMENT ROUTE TESTS', () => {
       });
   });
 
+  it('should ensure that a regular cannot view all documents', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.ordinaryUserLogin)
+      .end((err, res) => {
+        makeRequest.get('/documents')
+          .set('access-token', res.body.token)
+          .end((error, response) => {
+            expect(response.status).to.equal(403);
+            done();
+          });
+      });
+  });
+
   it('should ensure that a user can update his own document', (done) => {
     makeRequest.post('/users/login')
       .send(helper.ordinaryUserLogin)
@@ -103,7 +125,7 @@ describe('DOCUMENT ROUTE TESTS', () => {
       });
   });
 
-  it('should ensure that an admin update another user\'s document', (done) => {
+  it('should ensure that an admin update any user\'s document', (done) => {
     makeRequest.post('/users/login')
       .send(helper.adminUser)
       .end((err, res) => {
@@ -112,6 +134,20 @@ describe('DOCUMENT ROUTE TESTS', () => {
           .send({ title: 'Public Again', access: 'public' })
           .end((error, response) => {
             expect(response.status).to.equal(201);
+            done();
+          });
+      });
+  });
+
+  it('should ensure that a user cannot update another user\'s document', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.ordinaryUserLogin)
+      .end((err, res) => {
+        makeRequest.put('/documents/12')
+          .set('access-token', res.body.token)
+          .send({ content: 'This should not work' })
+          .end((error, response) => {
+            expect(response.status).to.equal(403);
             done();
           });
       });
@@ -130,7 +166,7 @@ describe('DOCUMENT ROUTE TESTS', () => {
       });
   });
 
-  it('should ensure that a admin can delete a document', (done) => {
+  it('should ensure that an admin can delete a document', (done) => {
     makeRequest.post('/users/login')
       .send(helper.adminUser)
       .end((err, res) => {
@@ -143,14 +179,56 @@ describe('DOCUMENT ROUTE TESTS', () => {
       });
   });
 
-  it('should ensure that a admin can delete a document', (done) => {
+  it('should ensure that a regular cannot delete another\'s document', (done) => {
     makeRequest.post('/users/login')
       .send(helper.ordinaryUserLogin)
       .end((err, res) => {
         makeRequest.delete('/documents/12')
           .set('access-token', res.body.token)
           .end((error, response) => {
-            expect(response.status).to.equal(401);
+            expect(response.status).to.equal(403);
+            done();
+          });
+      });
+  });
+
+  it('should ensure that an admin can find all documents by keyword', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.adminUser)
+      .end((err, res) => {
+        makeRequest.get('/documents/search/a')
+          .set('access-token', res.body.token)
+          .end((error, response) => {
+            expect(response.status).to.equal(200);
+            expect(response.body.success).to.equal(true);
+            done();
+          });
+      });
+  });
+
+  it('should ensure regular users can find theirs and public documents by keyword', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.ordinaryUserLogin)
+      .end((err, res) => {
+        makeRequest.get('/documents/search/a')
+          .set('access-token', res.body.token)
+          .end((error, response) => {
+            expect(response.status).to.equal(200);
+            expect(response.body.success).to.equal(true);
+            done();
+          });
+      });
+  });
+
+  it('should return status 404 when no document matches a keyword', (done) => {
+    makeRequest.post('/users/login')
+      .send(helper.ordinaryUserLogin)
+      .end((err, res) => {
+        makeRequest.get('/documents/search/abracadabra')
+          .set('access-token', res.body.token)
+          .end((error, response) => {
+            expect(response.status).to.equal(404);
+            expect(response.body.success).to.equal(true);
             done();
           });
       });

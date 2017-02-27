@@ -299,5 +299,50 @@ describe('Login', () => {
         });
     });
   });
+
+  describe('Search Users', () => {
+    it('should ensure an admin is able to search for users', (done) => {
+      makeRequest.post('/users/login')
+        .send(helper.adminUser)
+        .end((error, response) => {
+          makeRequest.get('/users/search/a')
+            .set('access-token', response.body.token)
+            .end((err, res) => {
+              expect(res.status).to.equal(200);
+              expect(res.body.success).to.equal(true);
+              done();
+            });
+        });
+    });
+
+    it('should return status 404 for search for inexistent users', (done) => {
+      makeRequest.post('/users/login')
+        .send(helper.adminUser)
+        .end((error, response) => {
+          makeRequest.get('/users/search/a87jnehbrrf')
+            .set('access-token', response.body.token)
+            .end((err, res) => {
+              expect(res.status).to.equal(404);
+              expect(res.body.success).to.equal(true);
+              expect(res.body.searchResult).to.be.a('null');
+              done();
+            });
+        });
+    });
+
+    it('should ensure a regular is not able to search for users', (done) => {
+      makeRequest.post('/users/login')
+        .send(helper.ordinaryUserLogin)
+        .end((error, response) => {
+          makeRequest.get('/users/search/a')
+            .set('access-token', response.body.token)
+            .end((err, res) => {
+              expect(res.status).to.equal(403);
+              expect(res.body.success).to.equal(false);
+              done();
+            });
+        });
+    });
+  });
 });
 

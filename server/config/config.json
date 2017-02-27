@@ -4,8 +4,7 @@
     "password": null,
     "database": "dms",
     "host": "localhost",
-    "dialect": "postgres",
-    "logging": false
+    "dialect": "postgres"
   },
   "test": {
     "username": "postgres",
