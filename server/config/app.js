@@ -5,8 +5,6 @@ import logger from 'morgan';
 import userRoutes from './routes/Users';
 import documentRoutes from './routes/Documents';
 import roleRoutes from './routes/Roles';
-import searchRoutes from './routes/Search';
-
 
 
 const app = express();
@@ -18,7 +16,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/users', userRoutes);
 app.use('/documents', documentRoutes);
 app.use('/roles', roleRoutes);
-app.use('/search', searchRoutes);
 
 /* Logout only */
 app.get('/logout', (req, res) => {
