@@ -6,9 +6,9 @@
   "scripts": {
     "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
-    "ist": "istanbul cover npm run test-server",
     "start": "babel-watch server",
     "migrate": "sequelize db:migrate",
+    "migrate:test": "NODE_ENV=test sequelize db:migrate",
     "generate:data": "NODE_ENV=test babel-node server/tests/TestHelper",
     "test-server": "npm run generate:data && NODE_ENV=test _mocha --compilers js:babel-core/register server/tests/**/*.js"
   },
@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/andela-oakinseye/cp3-document-manager#readme",
   "devDependencies": {
+    "babel-cli":"latest",
     "babel-preset-es2015": "^6.22.0",
     "babel-watch": "^2.0.6",
     "coveralls": "^2.11.16",
