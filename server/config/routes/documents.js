@@ -1,6 +1,6 @@
 import express from 'express';
-import * as documentCtrl from './../../app/controllers/documentCtrl';
-import authenticate from './../../app/middlewares/authenticate';
+import * as documentCtrl from './../../app/controllers/DocumentCtrl';
+import authenticate from './../../app/middlewares/Authenticate';
 
 const documentRoutes = express.Router();
 
@@ -12,5 +12,8 @@ documentRoutes.route('/:id')
   .get(authenticate, documentCtrl.findDocumentById)
   .put(authenticate, documentCtrl.updateDocumentById)
   .delete(authenticate, documentCtrl.deleteDocumentById);
+
+documentRoutes.route('/search/:searchterm')
+  .get(authenticate, documentCtrl.searchDocument);
 
 export default documentRoutes;

@@ -1,6 +1,13 @@
 import db from '../models/index';
-import * as auth from '../helpers/auth-helper';
+import * as auth from '../helpers/AuthHelper';
 
+/**
+ * createRole
+ * Create a new role
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const createRole = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
     db.Role
@@ -9,19 +16,21 @@ const createRole = (req, res) => {
       })
         .then((data) => {
           res.status(201).send(data);
-        })
-        .catch((error) => {
-          res.status(400).send({
-            message: error.message
-          });
         });
   } else {
-    return res.send({
+    return res.status(403).send({
       message: 'unauthorized access'
     });
   }
 };
 
+/**
+ * deleteRoleById
+ * Delete a specific role
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const deleteRoleById = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
     db.Role
@@ -29,34 +38,34 @@ const deleteRoleById = (req, res) => {
       .then((data) => {
         if (data) {
           data.destroy()
-            .then((response) => {
-              return res.status(201).send({
+            .then(() =>
+              res.status(201).send({
                 message: 'Role deleted'
-              })
-            .catch((error) => {
-              return res.status(400).send({
-                message: error.message
-              });
-            });
-            });
+              }));
         }
       });
   } else {
-    return res.send({
+    return res.status(403).json({
       message: 'unauthorized access'
     });
   }
 };
 
+/**
+ * getAllRoles
+ * Fetch and return all available roles
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getAllRoles = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
     db.Role
       .findAll()
-        .then((data) => {
-          return res.status(200).send(data);
-        });
+        .then(data =>
+          res.status(200).send(data));
   } else {
-    return res.send({
+    return res.status(403).send({
       message: 'unauthorized access'
     });
   }

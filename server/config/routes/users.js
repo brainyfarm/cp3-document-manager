@@ -1,6 +1,6 @@
 import express from 'express';
-import * as userCtrl from './../../app/controllers/userCtrl';
-import authenticate from './../../app/middlewares/authenticate';
+import * as userCtrl from './../../app/controllers/UserCtrl';
+import authenticate from './../../app/middlewares/Authenticate';
 
 const userRoutes = express.Router();
 
@@ -16,10 +16,10 @@ userRoutes.route('/:id')
 userRoutes.route('/:id/documents')
   .get(authenticate, userCtrl.getUserDocumentById);
 
+userRoutes.route('/search/:searchTerm')
+  .get(authenticate, userCtrl.searchUsers);
+
 userRoutes.route('/login')
-  .post(userCtrl.userLogin)
-  .get((req, res) => {
-    res.status(200).send('It works');
-  });
+  .post(userCtrl.userLogin);
 
 export default userRoutes;

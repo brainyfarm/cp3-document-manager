@@ -1,40 +1,54 @@
 import bcrypt from 'bcrypt-nodejs';
 import * as jwt from 'jsonwebtoken';
 
-import * as auth from '../helpers/auth-helper';
+import * as auth from '../helpers/AuthHelper';
 import db from '../models/index';
 
-
+/**
+ * userLogin
+ * Login a user
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const userLogin = (req, res) => {
   db.User.findOne({
     where: {
-      username: req.body.username
+      $or: {
+        username: req.body.username, email: req.body.email
+      }
     }
   }).then((user) => {
     if (!user) {
-      return res.status(400).send({
+      return res.status(403).send({
         message: 'User does not exist'
       });
     }
     if (bcrypt.compareSync(req.body.password, user.password)) {
       const token = jwt.sign(user.get({ plain: true }), 'secret', {
-        expiresIn: '4 days'
+        expiresIn: '14 days'
       });
-      return res.status(200).send(token);
+      return res.status(200).json({
+        success: true,
+        message: 'Login Successful',
+        email: user.email,
+        userId: user.id,
+        token
+      });
     }
-    return res.status(502).send({
+    return res.status(401).send({
       message: 'unauthorized access'
     });
-  })
-    .catch((error) => {
-      return res.status(400).send(error.message);
-    });
+  });
 };
 
-const userLogout = (req, res) => {
-  // user Logout action
-};
-
+/**
+ * createUser
+ * Create a new user
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const createUser = (req, res) => {
   db.User
     .create({
@@ -46,39 +60,62 @@ const createUser = (req, res) => {
     })
     .then((user) => {
       const token = jwt.sign(user.get({ plain: true }), 'secret', {
-        expiresIn: '4 days'
+        expiresIn: '14 days'
       });
-      return res.status(201).send({
+      return res.status(201).json({
+        success: true,
         message: 'User account created',
+        email: user.email,
+        roleId: user.role,
         token
       });
-    })
-    .catch(error =>
-      res.status(400).send({ message: error })
+    }).catch(error =>
+      res.status(500).json({
+        success: false,
+        error: error.message
+      })
     );
 };
 
+/**
+ * getUsers
+ * Fetch and return all users
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getUsers = (req, res) => {
   if (!auth.userIsAdmin(req.user.role)) {
-    return res.status(502).send({
+    return res.status(403).json({
+      success: false,
       message: 'unauthorized access'
     });
   }
   db.User.findAll()
     .then((data) => {
-      return res.status(200).send(data);
+      if (data.length) {
+        res.status(200).json(data);
+      }
     })
     .catch((error) => {
-      res.status(404).send({
-        message: error
+      res.status(500).json({
+        success: false,
+        message: error.message
       });
     });
 };
 
+/**
+ * findUserById
+ * Fetch and return a specific user's data
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const findUserById = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(502).send({
+    return res.status(403).send({
       message: 'You have no permission to view'
     });
   }
@@ -90,31 +127,37 @@ const findUserById = (req, res) => {
           message: 'User not found'
         });
       }
-      res.status(200).send({
+      return res.status(200).json({
         username: data.username,
         email: data.email,
         firstname: data.firstname,
         lastname: data.lastname,
         joined: data.createdAt
       });
-    })
-    .catch((error) => {
-      res.status(400).send({ message: error });
     });
 };
 
+/**
+ * updateUserData
+ * update a specified user's data
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const updateUserData = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(502).send({
-      message: 'You have no permission to edit'
+    return res.status(403).json({
+      success: false,
+      message: 'unauthorized access'
     });
   }
   db.User.findById(dataId)
     .then((data) => {
       if (!data) {
-        res.status(404).send({
-          message: 'User not found'
+        res.status(404).json({
+          success: false,
+          message: 'not found'
         });
       }
       data.update({
@@ -126,57 +169,64 @@ const updateUserData = (req, res) => {
       })
         .then((result) => {
           if (!result) {
-            res.status(400).send({
+            res.status(400).json({
+              success: false,
               message: 'Unable to modify'
             });
           }
-          res.status(201).send(
+          return res.status(201).json(
             data
           );
         })
         .catch((error) => {
-          res.status(400).send(
-            {
-              message: error
-            }
-          );
-        });
-    })
-    .catch((error) => {
-      res.status(400).send({
-        message: error
-      });
-    });
-};
-
-const deleteUser = (req, res) => {
-  const dataId = req.params.id;
-  if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(502).send({
-      message: 'unauthorized access'
-    });
-  }
-  db.User.findById(dataId)
-    .then((data) => {
-      if (!data) {
-        res.status(404).send({
-          message: 'User does not exist'
-        });
-      }
-      data.destroy()
-        .then(() => {
-          res.status(201).send({
-            message: 'User account has been deleted'
-          });
-        })
-        .catch((error) => {
-          res.status(400).send({
+          res.status(400).json({
+            success: false,
             message: error
           });
         });
     });
 };
 
+/**
+ * deleteUser
+ * Fetch and delete a user's account
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
+const deleteUser = (req, res) => {
+  const dataId = req.params.id;
+  if (!auth.userHasPermission(req.user, dataId)) {
+    return res.status(401).json({
+      success: false,
+      message: 'unauthorized access'
+    });
+  }
+  db.User.findById(dataId)
+    .then((data) => {
+      if (!data) {
+        return res.status(404).json({
+          success: false,
+          message: 'not found'
+        });
+      }
+      data.destroy()
+        .then(() => {
+          res.status(201).json({
+            success: true,
+            message: 'User account has been deleted'
+          });
+        });
+    });
+};
+
+/**
+ * getUserDocumentById
+ * Fetch and return all a specified user's documents
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
 const getUserDocumentById = (req, res) => {
   const userId = req.user.userId;
   const requestId = req.params.id;
@@ -185,16 +235,15 @@ const getUserDocumentById = (req, res) => {
       owner: requestId
     }
   };
-  if (userId == String(requestId) || auth.userIsAdmin(req.user.role)) {
+  if (String(userId) === String(requestId)
+    || auth.userIsAdmin(req.user.role)) {
     db.Document
       .findAll(query)
       .then((data) => {
-        return res.status(200).send(data);
-      })
-      .catch((error) => {
-        return res.status(400).send({
-          message: error.message
-        });
+        if (data.length) {
+          return res.status(200).json(data);
+        }
+        res.status(404).json('no document');
       });
   } else {
     db.Document
@@ -208,28 +257,76 @@ const getUserDocumentById = (req, res) => {
       })
       .then((data) => {
         if (data.length) {
-          res.status(200).send(data);
+          res.status(200).json(data);
         } else {
-          return res.status(404).send({
-            message: 'No data found'
+          return res.status(404).json({
+            success: false,
+            message: 'no data'
           });
         }
-      })
-      .catch((error) => {
-        return res.status(400).send({
-          message: error.message
-        });
       });
   }
 };
 
+/**
+ * searchUsers
+ * Search for users by keyword
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
+const searchUsers = (req, res) => {
+  const searchTerm = req.params.searchTerm;
+  const userSearchQuery = {
+    where: {
+      $or: {
+        lastname: {
+          $ilike: `%${searchTerm}%`
+        },
+        firstname: {
+          $ilike: `%${searchTerm}%`
+        },
+        username: {
+          $ilike: `%${searchTerm}%`
+        }
+      }
+    }
+  };
+  if (!auth.userIsAdmin(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'unauthorized access'
+    });
+  }
+  db.User
+    .findAll(userSearchQuery)
+    .then((searchResult) => {
+      if (searchResult.length) {
+        return res.status(200).json({
+          success: true,
+          searchResult
+        });
+      }
+      return res.status(404).json({
+        success: true,
+        searchResult: null
+      });
+    })
+    .catch(error =>
+      res.status(500).json({
+        success: false,
+        error: error.message
+      })
+    );
+};
+
 export {
   userLogin,
-  userLogout,
   createUser,
   getUsers,
   findUserById,
   updateUserData,
   deleteUser,
+  searchUsers,
   getUserDocumentById
 };
