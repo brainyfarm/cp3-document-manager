@@ -2,25 +2,7 @@ import faker from 'faker';
 import bcrypt from 'bcrypt-nodejs';
 import db from './../app/models/index';
 
-db.Role.truncate({ cascade: true });
-db.User.truncate({ cascade: true });
-db.Document.truncate({ cascade: true });
-
 const helper = {
-  testRole1: {
-    id: 1,
-    title: 'Regular'
-  },
-
-  testRole2: {
-    id: 2,
-    title: 'Admin'
-  },
-
-  testRole3: {
-    id: 2,
-    title: 'Guests'
-  },
 
   fakeUser: {
     email: 'fake@fake.fake',
@@ -138,7 +120,7 @@ const defaultUsers = [
     role: 1
   },
   {
-    id: 5,
+    id: 4,
     username: 'james',
     firstname: 'James',
     lastname: 'Swepps',
@@ -158,32 +140,28 @@ const defaultDocuments = [
   },
 
   {
-    id: 7,
     title: faker.company.catchPhrase(),
     content: faker.company.catchPhrase(),
     access: 'public',
     owner: 2
   },
   {
-    id: 10,
     title: faker.company.catchPhrase(),
     content: faker.company.catchPhrase(),
     access: 'private',
     owner: 1
   },
   {
-    id: 11,
     title: faker.company.catchPhrase(),
     content: faker.company.catchPhrase(),
     access: 'public',
-    owner: 4
+    owner: 1
   },
   {
-    id: 12,
     title: faker.company.catchPhrase(),
     content: faker.company.catchPhrase(),
     access: 'public',
-    owner: 4
+    owner: 2
   }];
 
 const defaultRoles = [
@@ -194,11 +172,6 @@ const defaultRoles = [
   {
     id: 2,
     title: 'Admin'
-  },
-
-  {
-    id: 3,
-    title: 'Content Manager'
   }
 ];
 
@@ -207,9 +180,9 @@ const defaultRoles = [
  * @return {undefined}
  */
 const populateData = () => {
-  db.Role.bulkCreate(defaultRoles);
+  // db.Role.bulkCreate(defaultRoles);
   db.User.bulkCreate(defaultUsers);
-  db.Document.bulkCreate(defaultDocuments);
+  // db.Document.bulkCreate(defaultDocuments);
 };
 export {
   helper,
