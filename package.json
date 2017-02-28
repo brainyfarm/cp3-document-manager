@@ -5,8 +5,9 @@
   "main": "server.js",
   "scripts": {
     "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
+    "heroku_build":"npm run migrate",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
-    "start": "babel-watch server",
+    "start": "NODE_ENV=production babel-node server",
     "migrate": "sequelize db:migrate",
     "migrate:test": "NODE_ENV=test sequelize db:migrate",
     "generate:data": "NODE_ENV=test babel-node server/tests/TestHelper",
@@ -55,6 +56,9 @@
     "supertest": "^3.0.0"
   },
   "dependencies": {
+    "babel-cli": "latest",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-watch": "^2.0.6",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.16.0",
     "chai": "^3.5.0",
