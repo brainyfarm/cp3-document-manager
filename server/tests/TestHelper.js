@@ -202,7 +202,6 @@ const defaultRoles = [
  * @return {undefined}
  */
 const populateData = () => {
-  console.log('about to');
   db.Role.bulkCreate(defaultRoles);
   db.User.bulkCreate(defaultUsers);
   db.Document.bulkCreate(defaultDocuments);
