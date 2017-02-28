@@ -62,6 +62,10 @@ The following are some sample request and response from the API.
 - [Users](#users)
   - [Create user](#create-user)
   - [Get user](#get-user)
+  - [Delete user](#delete-user)
+  - [Update user](#update-user)
+  - [Get User's documents](#get-user-documents)
+  - [Find Users](#find-users)
 
 - [Documents](#documents)
   - [Get All documents](#get-all-documents)
@@ -69,10 +73,7 @@ The following are some sample request and response from the API.
   - [Get document](#get-document)
   - [Edit document](#edit-document)
   - [Delete document](#delete-document)
-
-- [Search](#search)
-  - [Search Documents](#search-documents)
-  - [Search Users] (#search-users)
+  - [Search Document](#search-document)
 
 
 ## Roles
