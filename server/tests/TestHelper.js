@@ -207,6 +207,7 @@ const populateData = () => {
   db.User.bulkCreate(defaultUsers);
   db.Document.bulkCreate(defaultDocuments);
 };
+populateData();
 export {
   helper,
   populateData
