@@ -1,12 +1,11 @@
 import request from 'supertest';
 import chai from 'chai';
 import app from '../../config/app';
-import { helper, populateData } from '../TestHelper';
+import { helper } from '../TestHelper';
 
 const makeRequest = request.agent(app);
 const expect = chai.expect;
 
-populateData();
 
 describe('User Route Test Suite', () => {
   describe('Create User', () => {

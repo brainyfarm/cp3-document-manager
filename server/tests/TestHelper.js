@@ -194,11 +194,6 @@ const defaultRoles = [
   {
     id: 2,
     title: 'Admin'
-  },
-
-  {
-    id: 3,
-    title: 'Content Manager'
   }
 ];
 
@@ -207,6 +202,7 @@ const defaultRoles = [
  * @return {undefined}
  */
 const populateData = () => {
+  console.log('about to');
   db.Role.bulkCreate(defaultRoles);
   db.User.bulkCreate(defaultUsers);
   db.Document.bulkCreate(defaultDocuments);
