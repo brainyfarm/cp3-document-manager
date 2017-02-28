@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
+    "heroku_build":"npm run migrate",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
     "start": "NODE_ENV=production babel-watch server",
     "migrate": "sequelize db:migrate",
