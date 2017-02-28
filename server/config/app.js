@@ -9,6 +9,8 @@ import roleRoutes from './routes/Roles';
 
 const app = express();
 
+const PORT = process.env.PORT || 4040;
+
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -25,8 +27,8 @@ app.get('/logout', (req, res) => {
   });
 });
 
-app.listen(4040, () => {
-  console.log('We are running on 4040');
+app.listen(PORT, () => {
+  console.log(`App running on ${PORT}`);
 });
 
 export default app;

@@ -17,3 +17,4 @@ documentRoutes.route('/search/:searchterm')
   .get(authenticate, documentCtrl.searchDocument);
 
 export default documentRoutes;
+
