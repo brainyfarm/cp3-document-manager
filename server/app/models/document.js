@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const Document = sequelize.define('Document', {
     owner: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     title: {

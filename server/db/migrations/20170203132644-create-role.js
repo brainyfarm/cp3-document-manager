@@ -1,5 +1,5 @@
 module.exports = {
-  up: function(queryInterface, Sequelize) {
+  up(queryInterface, Sequelize) {
     return queryInterface.createTable('Roles', {
       id: {
         allowNull: false,
@@ -8,9 +8,8 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       title: {
-        unique: true,
-        type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
@@ -22,7 +21,7 @@ module.exports = {
       }
     });
   },
-  down: function(queryInterface, Sequelize) {
+  down(queryInterface, Sequelize) {
     return queryInterface.dropTable('Roles');
   }
 };
