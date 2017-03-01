@@ -10,7 +10,7 @@ import * as auth from '../helpers/AuthHelper';
  */
 const createRole = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Role
+    db.Roles
       .create({
         title: req.body.title
       })
@@ -33,7 +33,7 @@ const createRole = (req, res) => {
  */
 const deleteRoleById = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Role
+    db.Roles
     .findById(req.params.id)
       .then((data) => {
         if (data) {
@@ -60,7 +60,7 @@ const deleteRoleById = (req, res) => {
  */
 const getAllRoles = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Role
+    db.Roles
       .findAll()
         .then(data =>
           res.status(200).send(data));

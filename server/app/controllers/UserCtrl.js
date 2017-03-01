@@ -12,7 +12,7 @@ import db from '../models/index';
  * @return {undefined}
  */
 const userLogin = (req, res) => {
-  db.User.findOne({
+  db.Users.findOne({
     where: {
       $or: {
         username: req.body.username, email: req.body.email
@@ -50,7 +50,7 @@ const userLogin = (req, res) => {
  * @return {undefined}
  */
 const createUser = (req, res) => {
-  db.User
+  db.Users
     .create({
       username: req.body.username,
       password: req.body.password,
@@ -91,7 +91,7 @@ const getUsers = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User.findAll()
+  db.Users.findAll()
     .then((data) => {
       if (data.length) {
         res.status(200).json(data);
@@ -119,7 +119,7 @@ const findUserById = (req, res) => {
       message: 'You have no permission to view'
     });
   }
-  db.User
+  db.Users
     .findById(dataId)
     .then((data) => {
       if (!data) {
@@ -152,7 +152,7 @@ const updateUserData = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User.findById(dataId)
+  db.Users.findById(dataId)
     .then((data) => {
       if (!data) {
         res.status(404).json({
@@ -202,7 +202,7 @@ const deleteUser = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User.findById(dataId)
+  db.Users.findById(dataId)
     .then((data) => {
       if (!data) {
         return res.status(404).json({
@@ -298,7 +298,7 @@ const searchUsers = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User
+  db.Users
     .findAll(userSearchQuery)
     .then((searchResult) => {
       if (searchResult.length) {

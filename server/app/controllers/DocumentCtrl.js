@@ -9,7 +9,7 @@ import * as auth from '../helpers/AuthHelper';
  * @return {undefined}
  */
 const createDocument = (req, res) => {
-  db.Document
+  db.Documents
     .create({
       title: req.body.title,
       content: req.body.content,
@@ -33,7 +33,7 @@ const getDocuments = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.Document
+  db.Documents
     .findAll()
     .then((data) => {
       if (data.length) {
@@ -59,7 +59,7 @@ const getDocuments = (req, res) => {
  */
 const findDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
-  db.Document
+  db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
       if (data) {
@@ -94,7 +94,7 @@ const findDocumentById = (req, res) => {
  */
 const updateDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
-  db.Document
+  db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
       if (data.owner === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
@@ -132,7 +132,7 @@ const updateDocumentById = (req, res) => {
  */
 const deleteDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
-  db.Document
+  db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
       if (data.owner === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
@@ -200,7 +200,7 @@ const searchDocument = (req, res) => {
       }
     }
   };
-  db.Document
+  db.Documents
     .findAll(documentSearchQuery)
     .then((searchResult) => {
       if (searchResult.length) {
