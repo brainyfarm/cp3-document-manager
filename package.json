@@ -7,11 +7,9 @@
     "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
     "heroku_build":"npm run migrate",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
-    "ist": "istanbul cover npm run test-server",
     "start": "babel-node server",
     "migrate": "sequelize db:migrate",
     "generate:data": "NODE_ENV=test babel-node server/tests/SeedHelper",
-    "migrate:test": "NODE_ENV=test sequelize db:migrate:undo:all && NODE_ENV=test sequelize db:migrate",
     "test-server": "NODE_ENV=test npm run generate:data && NODE_ENV=test _mocha --compilers js:babel-core/register server/tests/**/*.js"
   },
   "repository": {
