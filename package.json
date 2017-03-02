@@ -5,13 +5,12 @@
   "main": "server.js",
   "scripts": {
     "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
-    "heroku_build":"npm run migrate",
+    "heroku_build": "npm run migrate",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
     "start": "babel-node server",
     "migrate": "sequelize db:migrate",
     "generate:data": "NODE_ENV=test babel-node server/tests/SeedHelper",
     "test": "npm run generate:data && NODE_ENV=test _mocha --compilers js:babel-core/register server/tests/**/*.js && npm run generate:data && npm run coveralls"
-
   },
   "repository": {
     "type": "git",
@@ -45,7 +44,7 @@
     "jsonwebtoken": "^7.2.1",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
-    "istanbul": "^0.4.5",
+    "istanbul": "^1.0.0-alpha.2",
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0",
     "nodemon": "^1.11.0",
