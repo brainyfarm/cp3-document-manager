@@ -6,8 +6,3 @@ before_script:
 - npm install
 - psql -c 'create database dms_test;' -U postgres
 - dropdb --if-exists dms_test && createdb dms_test
-- npm run generate:data
-- npm run test-server
-
-after_success:
-- npm run coveralls

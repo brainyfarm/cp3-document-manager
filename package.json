@@ -10,7 +10,7 @@
     "start": "babel-node server",
     "migrate": "sequelize db:migrate",
     "generate:data": "NODE_ENV=test babel-node server/tests/SeedHelper",
-    "test-server": "NODE_ENV=test _mocha --compilers js:babel-core/register server/tests/**/*.js"
+    "test": "npm run generate:data && NODE_ENV=test _mocha --compilers js:babel-core/register server/tests/**/*.js && npm run generate:data && npm run coveralls"
 
   },
   "repository": {
