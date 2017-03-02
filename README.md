@@ -1,5 +1,5 @@
 [![Coverage Status](https://coveralls.io/repos/github/andela-oakinseye/cp3-document-manager/badge.svg?branch=development)](https://coveralls.io/github/andela-oakinseye/cp3-document-manager?branch=development) [![Build Status](https://travis-ci.org/andela-oakinseye/cp3-document-manager.svg?branch=development)](https://travis-ci.org/andela-oakinseye/cp3-document-manager) [![Code Climate](https://codeclimate.com/github/andela-oakinseye/cp3-document-manager/badges/gpa.svg)](https://codeclimate.com/github/andela-oakinseye/cp3-document-manager)
-# Checkpoint-Finale
+# Epic Document Manager
 ### A Document Management API
 
 Document Management System provides an interface for users to create and manage documents, it uses JWT as its authentication mechanism.
