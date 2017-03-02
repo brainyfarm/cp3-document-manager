@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     email: {
       type: DataTypes.STRING,
+      unique: true,
       allowNull: false,
       validate: {
         isEmail: true
@@ -34,7 +35,12 @@ module.exports = (sequelize, DataTypes) => {
       classMethods: {
         associate: function (models) {
           // associations can be defined here
-          Users.hasMany(models.Documents, { foreignKey: 'owner' });
+          Users.hasMany(models.Documents, {
+            foreignKey: 'owner'
+          });
+          Users.belongsTo(models.Roles, {
+            foreignKey: 'role'
+          });
         }
       },
       instanceMethods: {
