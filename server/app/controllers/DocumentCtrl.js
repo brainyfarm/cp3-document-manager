@@ -64,11 +64,11 @@ const findDocumentById = (req, res) => {
     .then((data) => {
       if (data) {
         if (auth.userIsAdmin(req.user.role)
-          || data.owner === String(req.user.userId)
+          || String(data.owner) === String(req.user.userId)
           || data.access === 'public') {
           res.status(200).send(data);
         } else {
-          return res.status(401).send({
+          return res.status(403).send({
             message: 'unauthorized access'
           });
         }
@@ -97,28 +97,35 @@ const updateDocumentById = (req, res) => {
   db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
-      if (data.owner === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
+      if (!data) {
+        return res.status(404).json({
+          message: 'Document does not exist'
+        });
+      }
+      if (String(data.owner) === String(req.user.userId) ||
+      auth.userIsAdmin(req.user.role)) {
         data.update({
           title: req.body.title || data.title,
           content: req.body.content || data.content,
-          access: req.body.access || data.access
+          access: req.body.access || data.access,
+          owner: data.owner
         })
           .then((response) => {
-            res.status(201).send(response);
+            res.status(201).json(response);
           })
           .catch((error) => {
-            res.status(400).send({
+            res.status(400).json({
               message: error.message
             });
           });
       } else {
-        res.status(403).send({
+        res.status(403).json({
           message: 'unauthorized access'
         });
       }
     })
     .catch(error =>
-      res.send({
+      res.json({
         message: error.message
       }));
 };
@@ -135,7 +142,7 @@ const deleteDocumentById = (req, res) => {
   db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
-      if (data.owner === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
+      if (String(data.owner) === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
         data.destroy()
           .then(() => {
             res.status(201).send({

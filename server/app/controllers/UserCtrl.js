@@ -36,7 +36,7 @@ const userLogin = (req, res) => {
         token
       });
     }
-    return res.status(401).send({
+    return res.status(403).send({
       message: 'unauthorized access'
     });
   });
@@ -72,7 +72,7 @@ const createUser = (req, res) => {
     }).catch(error =>
       res.status(500).json({
         success: false,
-        error: error.message
+        error: error
       })
     );
 };
@@ -197,7 +197,7 @@ const updateUserData = (req, res) => {
 const deleteUser = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(401).json({
+    return res.status(403).json({
       success: false,
       message: 'unauthorized access'
     });
@@ -237,7 +237,7 @@ const getUserDocumentById = (req, res) => {
   };
   if (String(userId) === String(requestId)
     || auth.userIsAdmin(req.user.role)) {
-    db.Document
+    db.Documents
       .findAll(query)
       .then((data) => {
         if (data.length) {
@@ -246,7 +246,7 @@ const getUserDocumentById = (req, res) => {
         res.status(404).json('no document');
       });
   } else {
-    db.Document
+    db.Documents
       .findAll({
         where: {
           owner: requestId,
