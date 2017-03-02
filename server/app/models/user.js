@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt-nodejs';
 
 module.exports = (sequelize, DataTypes) => {
-  const User = sequelize.define('User', {
+  const Users = sequelize.define('Users', {
     username: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     email: {
       type: DataTypes.STRING,
+      unique: true,
       allowNull: false,
       validate: {
         isEmail: true
@@ -31,36 +32,37 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 1
     }
   }, {
-    classMethods: {
-      associate: function (models) {
-        // associations can be defined here
-        User.hasMany(models.Document, { foreignKey: 'owner' });
-        User.belongsTo(models.Role, {
-          foreignKey: 'role',
-          onDelete: 'CASCADE'
-        });
-      }
-    },
-    instanceMethods: {
-      validPassword: function validPassword(password) {
-        return bcrypt.compareSync(password, this.password);
+      classMethods: {
+        associate: function (models) {
+          // associations can be defined here
+          Users.hasMany(models.Documents, {
+            foreignKey: 'owner'
+          });
+          Users.belongsTo(models.Roles, {
+            foreignKey: 'role'
+          });
+        }
       },
+      instanceMethods: {
+        validPassword: function validPassword(password) {
+          return bcrypt.compareSync(password, this.password);
+        },
 
-      hashPassword: function hashPassword() {
-        this.password = bcrypt.hashSync(this.password, bcrypt.genSaltSync(8));
-      }
-    },
-    hooks: {
-      beforeCreate(user) {
-        user.hashPassword();
+        hashPassword: function hashPassword() {
+          this.password = bcrypt.hashSync(this.password, bcrypt.genSaltSync(8));
+        }
       },
-
-      beforeUpdate(user) {
-        if (user._changed.password) {
+      hooks: {
+        beforeCreate(user) {
           user.hashPassword();
+        },
+
+        beforeUpdate(user) {
+          if (user._changed.password) {
+            user.hashPassword();
+          }
         }
       }
-    }
-  });
-  return User;
+    });
+  return Users;
 };

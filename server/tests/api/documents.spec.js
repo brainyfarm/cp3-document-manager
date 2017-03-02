@@ -1,236 +1,199 @@
 import request from 'supertest';
 import chai from 'chai';
 import app from '../../config/app';
-import { helper, populateData } from '../TestHelper';
+import { sampleUserData, defaultPassword } from '../TestHelper';
 
-populateData();
-
-const makeRequest = request.agent(app);
+const requester = request.agent(app);
 const expect = chai.expect;
 
-describe('DOCUMENT ROUTE TESTS', () => {
-  it('should successfully create a document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.post('/documents')
-          .set('access-token', res.body.token)
-          .send({ title: 'Simple Document', content: 'Body of the document', access: 'public' })
-          .end((error, response) => {
-            expect(response.status).to.equal(201);
-            done();
-          });
-      });
-  });
-
-  it('should prevent a user without a token from creating documents', (done) => {
-    makeRequest.post('/documents')
-      .send({ title: 'Simple Document', content: 'Body of the document' })
+describe('Document Route', () => {
+  let regularUserToken;
+  let adminUserToken;
+  let regularUserDocument;
+  before((done) => {
+    requester.post('/users/login')
+      .send({ email: sampleUserData.admin.email, password: defaultPassword })
       .end((error, response) => {
-        expect(response.status).to.equal(403);
-        done();
+        adminUserToken = response.body.token;
       });
-  });
-
-  it('should fail to create a document if title is not supplied', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.post('/documents')
-          .set('access-token', res.body.token)
-          .send({ content: 'Body of the document', access: 'public' })
+    requester.post('/users/login')
+      .send({ email: sampleUserData.regular.email, password: defaultPassword })
+      .end((error, response) => {
+        regularUserToken = response.body.token;
+        requester.post('/documents')
+          .set({ 'access-token': regularUserToken })
+          .send({ title: 'Lorem Ipsum', content: 'Lorem Ipsum Something' })
           .end((error, response) => {
-            expect(response.status).to.equal(500);
+            regularUserDocument = response.body.document;
+            console.log(regularUserDocument);
             done();
           });
       });
   });
-
-  it('should ensure that a user can view his document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.get('/documents/7')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(200);
-            done();
-          });
-      });
+  describe('Create Document', () => {
+    it('should prevent unauthenticated users from creating documents', (done) => {
+      requester.post('/documents')
+        .send(sampleUserData.freeDocument)
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          done();
+        });
+    });
+    it('should prevent user from creating documents if title is not supplied', (done) => {
+      requester.post('/documents')
+        .set({ 'access-token': regularUserToken })
+        .send(sampleUserData.documentWithNoTitle)
+        .end((error, response) => {
+          expect(response.status).to.equal(500);
+          done();
+        });
+    });
+    it('should ensure authenticated users are able to create documents', (done) => {
+      requester.post('/documents')
+        .set({ 'access-token': regularUserToken })
+        .send(sampleUserData.freeDocument)
+        .end((error, response) => {
+          expect(response.status).to.equal(201);
+          done();
+        });
+    });
   });
 
-  it('should ensure that a user cannot view another\'s private document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.get('/documents/10')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(401);
-            done();
-          });
-      });
+  describe('Update Document', () => {
+    it('should prevent a regular user from updating another\'s document', (done) => {
+      requester.put('/documents/4')
+        .set({ 'access-token': regularUserToken })
+        .send({ access: 'public' })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          done();
+        });
+    });
+    it('should ensure a user can update his own document', (done) => {
+      requester.put(`/documents/${regularUserDocument.id}`)
+        .set({ 'access-token': regularUserToken })
+        .send({ access: 'public' })
+        .end((error, response) => {
+          expect(response.status).to.equal(201);
+          done();
+        });
+    });
+    it('should allow an admin update any document', (done) => {
+      requester.put('/documents/2')
+        .set({ 'access-token': adminUserToken })
+        .send({ access: 'private' })
+        .end((error, response) => {
+          expect(response.status).to.equal(201);
+          done();
+        });
+    });
   });
 
-  it('should return 404 error for a document that does not exist', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.adminUser)
-      .end((err, res) => {
-        makeRequest.get('/documents/10000')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(404);
-            done();
-          });
-      });
+  describe('View Document', () => {
+    it('should return a 404 error if user tries to view a ghost document', (done) => {
+      requester.get('/documents/2000')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
+    it('should prevent a user from viewing another\'s private document', (done) => {
+      requester.get('/documents/4')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          done();
+        });
+    });
+    it('should ensure a user is able to view his document', (done) => {
+      requester.get('/documents/2')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          done();
+        });
+    });
+    it('should allow an admin view any user\'s document', (done) => {
+      requester.get('/documents/2')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          done();
+        });
+    });
   });
 
-  it('should ensure that an admin can view all documents', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.adminUser)
-      .end((err, res) => {
-        makeRequest.get('/documents')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(200);
-            done();
-          });
-      });
+  describe('Get Documents', () => {
+    it('should prevent a regular user from viewing all documents', (done) => {
+      requester.get('/documents')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          done();
+        });
+    });
+    it('should ensure that admin can view all documents', (done) => {
+      requester.get('/documents')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          done();
+        });
+    });
   });
 
-  it('should ensure that a regular cannot view all documents', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.get('/documents')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(403);
-            done();
-          });
-      });
+  describe('Search Documents', () => {
+    it('should return a 404 error if no search result is returned', (done) => {
+      requester.get('/documents/search/abracadabra')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
+    it('should allow a regular search for documents by keyword', (done) => {
+      requester.get('/documents/search/Alice')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          done();
+        });
+    });
+    it('should ensure an admin can search documents by keyword', (done) => {
+      requester.get('/documents/search/Alice')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          done();
+        });
+    });
   });
 
-  it('should ensure that a user can update his own document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.put('/documents/7')
-          .set('access-token', res.body.token)
-          .send({ title: 'Private Document', access: 'private' })
-          .end((error, response) => {
-            expect(response.status).to.equal(201);
-            done();
-          });
-      });
-  });
-
-  it('should ensure that an admin update any user\'s document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.adminUser)
-      .end((err, res) => {
-        makeRequest.put('/documents/7')
-          .set('access-token', res.body.token)
-          .send({ title: 'Public Again', access: 'public' })
-          .end((error, response) => {
-            expect(response.status).to.equal(201);
-            done();
-          });
-      });
-  });
-
-  it('should ensure that a user cannot update another user\'s document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.put('/documents/12')
-          .set('access-token', res.body.token)
-          .send({ content: 'This should not work' })
-          .end((error, response) => {
-            expect(response.status).to.equal(403);
-            done();
-          });
-      });
-  });
-
-  it('should ensure that a user can delete his document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.delete('/documents/7')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(201);
-            done();
-          });
-      });
-  });
-
-  it('should ensure that an admin can delete a document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.adminUser)
-      .end((err, res) => {
-        makeRequest.delete('/documents/10')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(201);
-            done();
-          });
-      });
-  });
-
-  it('should ensure that a regular cannot delete another\'s document', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.delete('/documents/12')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(403);
-            done();
-          });
-      });
-  });
-
-  it('should ensure that an admin can find all documents by keyword', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.adminUser)
-      .end((err, res) => {
-        makeRequest.get('/documents/search/a')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(200);
-            expect(response.body.success).to.equal(true);
-            done();
-          });
-      });
-  });
-
-  it('should ensure regular users can find theirs and public documents by keyword', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.get('/documents/search/a')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(200);
-            expect(response.body.success).to.equal(true);
-            done();
-          });
-      });
-  });
-
-  it('should return status 404 when no document matches a keyword', (done) => {
-    makeRequest.post('/users/login')
-      .send(helper.ordinaryUserLogin)
-      .end((err, res) => {
-        makeRequest.get('/documents/search/abracadabra')
-          .set('access-token', res.body.token)
-          .end((error, response) => {
-            expect(response.status).to.equal(404);
-            expect(response.body.success).to.equal(true);
-            done();
-          });
-      });
+  describe('Delete Document', () => {
+    it('should prevent a regular user from deleting another\'s document', (done) => {
+      requester.delete('/documents/4')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          done();
+        });
+    });
+    it('should allow a user delete his document', (done) => {
+      requester.delete(`/documents/${regularUserDocument.id}`)
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(201);
+          done();
+        });
+    });
+    it('should ensure than an admin is able to delete any document', (done) => {
+      requester.delete('/documents/7')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(201);
+          done();
+        });
+    });
   });
 });

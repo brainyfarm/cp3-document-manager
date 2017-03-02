@@ -12,7 +12,7 @@ import db from '../models/index';
  * @return {undefined}
  */
 const userLogin = (req, res) => {
-  db.User.findOne({
+  db.Users.findOne({
     where: {
       $or: {
         username: req.body.username, email: req.body.email
@@ -36,7 +36,7 @@ const userLogin = (req, res) => {
         token
       });
     }
-    return res.status(401).send({
+    return res.status(403).send({
       message: 'unauthorized access'
     });
   });
@@ -50,7 +50,7 @@ const userLogin = (req, res) => {
  * @return {undefined}
  */
 const createUser = (req, res) => {
-  db.User
+  db.Users
     .create({
       username: req.body.username,
       password: req.body.password,
@@ -72,7 +72,7 @@ const createUser = (req, res) => {
     }).catch(error =>
       res.status(500).json({
         success: false,
-        error: error.message
+        error: error
       })
     );
 };
@@ -91,7 +91,7 @@ const getUsers = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User.findAll()
+  db.Users.findAll()
     .then((data) => {
       if (data.length) {
         res.status(200).json(data);
@@ -119,7 +119,7 @@ const findUserById = (req, res) => {
       message: 'You have no permission to view'
     });
   }
-  db.User
+  db.Users
     .findById(dataId)
     .then((data) => {
       if (!data) {
@@ -152,7 +152,7 @@ const updateUserData = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User.findById(dataId)
+  db.Users.findById(dataId)
     .then((data) => {
       if (!data) {
         res.status(404).json({
@@ -197,12 +197,12 @@ const updateUserData = (req, res) => {
 const deleteUser = (req, res) => {
   const dataId = req.params.id;
   if (!auth.userHasPermission(req.user, dataId)) {
-    return res.status(401).json({
+    return res.status(403).json({
       success: false,
       message: 'unauthorized access'
     });
   }
-  db.User.findById(dataId)
+  db.Users.findById(dataId)
     .then((data) => {
       if (!data) {
         return res.status(404).json({
@@ -237,7 +237,7 @@ const getUserDocumentById = (req, res) => {
   };
   if (String(userId) === String(requestId)
     || auth.userIsAdmin(req.user.role)) {
-    db.Document
+    db.Documents
       .findAll(query)
       .then((data) => {
         if (data.length) {
@@ -246,7 +246,7 @@ const getUserDocumentById = (req, res) => {
         res.status(404).json('no document');
       });
   } else {
-    db.Document
+    db.Documents
       .findAll({
         where: {
           owner: requestId,
@@ -298,7 +298,7 @@ const searchUsers = (req, res) => {
       message: 'unauthorized access'
     });
   }
-  db.User
+  db.Users
     .findAll(userSearchQuery)
     .then((searchResult) => {
       if (searchResult.length) {

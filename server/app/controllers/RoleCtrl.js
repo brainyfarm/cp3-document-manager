@@ -10,13 +10,13 @@ import * as auth from '../helpers/AuthHelper';
  */
 const createRole = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Role
+    db.Roles
       .create({
         title: req.body.title
       })
-        .then((data) => {
-          res.status(201).send(data);
-        });
+      .then((data) => {
+        res.status(201).send(data);
+      });
   } else {
     return res.status(403).send({
       message: 'unauthorized access'
@@ -33,16 +33,14 @@ const createRole = (req, res) => {
  */
 const deleteRoleById = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Role
-    .findById(req.params.id)
+    db.Roles
+      .findById(req.params.id)
       .then((data) => {
-        if (data) {
-          data.destroy()
-            .then(() =>
-              res.status(201).send({
-                message: 'Role deleted'
-              }));
-        }
+        data.destroy()
+          .then(() =>
+            res.status(201).send({
+              message: 'Role deleted'
+            }));
       });
   } else {
     return res.status(403).json({
@@ -60,10 +58,10 @@ const deleteRoleById = (req, res) => {
  */
 const getAllRoles = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Role
+    db.Roles
       .findAll()
-        .then(data =>
-          res.status(200).send(data));
+      .then(data =>
+        res.status(200).send(data));
   } else {
     return res.status(403).send({
       message: 'unauthorized access'

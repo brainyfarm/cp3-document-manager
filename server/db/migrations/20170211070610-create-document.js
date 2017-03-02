@@ -1,5 +1,5 @@
 module.exports = {
-  up: function(queryInterface, Sequelize) {
+  up(queryInterface, Sequelize) {
     return queryInterface.createTable('Documents', {
       id: {
         allowNull: false,
@@ -8,8 +8,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       owner: {
-        type: Sequelize.STRING,
-        allowNull: false
+        type: Sequelize.INTEGER
       },
       title: {
         type: Sequelize.STRING,
@@ -37,7 +36,7 @@ module.exports = {
       }
     });
   },
-  down: function(queryInterface, Sequelize) {
+  down(queryInterface, Sequelize) {
     return queryInterface.dropTable('Documents');
   }
 };
