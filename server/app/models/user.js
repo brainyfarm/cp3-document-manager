@@ -44,10 +44,6 @@ module.exports = (sequelize, DataTypes) => {
         }
       },
       instanceMethods: {
-        validPassword: function validPassword(password) {
-          return bcrypt.compareSync(password, this.password);
-        },
-
         hashPassword: function hashPassword() {
           this.password = bcrypt.hashSync(this.password, bcrypt.genSaltSync(8));
         }

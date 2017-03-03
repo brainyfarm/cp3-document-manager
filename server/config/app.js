@@ -22,7 +22,7 @@ app.use('/roles', roleRoutes);
 /* Logout only */
 app.get('/logout', (req, res) => {
   /* Destroy and blacklist token here */
-  res.status(201).json({
+  res.status(200).json({
     success: true
   });
 });
