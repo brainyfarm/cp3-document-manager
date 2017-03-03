@@ -1,5 +1,6 @@
 import db from '../models/index';
 import * as auth from '../helpers/AuthHelper';
+import reply from './../helpers/ResponseSender';
 
 /**
  * createRole
@@ -10,18 +11,15 @@ import * as auth from '../helpers/AuthHelper';
  */
 const createRole = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Roles
+    return db.Roles
       .create({
         title: req.body.title
       })
       .then((data) => {
-        res.status(201).send(data);
+        reply.messageContentCreated(res, 'new role created', data);
       });
-  } else {
-    return res.status(403).send({
-      message: 'unauthorized access'
-    });
   }
+  return reply.messageAuthorizedAccess(res);
 };
 
 /**
@@ -33,20 +31,16 @@ const createRole = (req, res) => {
  */
 const deleteRoleById = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Roles
+    return db.Roles
       .findById(req.params.id)
-      .then((data) => {
+      .then(data =>
         data.destroy()
-          .then(() =>
-            res.status(201).send({
-              message: 'Role deleted'
-            }));
-      });
-  } else {
-    return res.status(403).json({
-      message: 'unauthorized access'
-    });
+          .then(() => {
+            reply.messageDeleteSuccess(res, 'role deleted');
+          })
+      );
   }
+  return reply.messageAuthorizedAccess(res);
 };
 
 /**
@@ -58,15 +52,13 @@ const deleteRoleById = (req, res) => {
  */
 const getAllRoles = (req, res) => {
   if (auth.userIsAdmin(req.user.role)) {
-    db.Roles
+    return db.Roles
       .findAll()
-      .then(data =>
-        res.status(200).send(data));
-  } else {
-    return res.status(403).send({
-      message: 'unauthorized access'
-    });
+      .then((data) => {
+        reply.messageOkSendData(res, data);
+      });
   }
+  return reply.messageAuthorizedAccess(res);
 };
 
 

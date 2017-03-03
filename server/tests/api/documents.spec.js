@@ -14,18 +14,17 @@ describe('Document Route', () => {
     requester.post('/users/login')
       .send({ email: sampleUserData.admin.email, password: defaultPassword })
       .end((error, response) => {
-        adminUserToken = response.body.token;
+        adminUserToken = response.body.data.token;
       });
     requester.post('/users/login')
       .send({ email: sampleUserData.regular.email, password: defaultPassword })
       .end((error, response) => {
-        regularUserToken = response.body.token;
+        regularUserToken = response.body.data.token;
         requester.post('/documents')
           .set({ 'access-token': regularUserToken })
           .send({ title: 'Lorem Ipsum', content: 'Lorem Ipsum Something' })
           .end((error, response) => {
-            regularUserDocument = response.body.document;
-            console.log(regularUserDocument);
+            regularUserDocument = response.body.data;
             done();
           });
       });
@@ -35,7 +34,7 @@ describe('Document Route', () => {
       requester.post('/documents')
         .send(sampleUserData.freeDocument)
         .end((error, response) => {
-          expect(response.status).to.equal(403);
+          expect(response.status).to.equal(401);
           done();
         });
     });
@@ -69,12 +68,21 @@ describe('Document Route', () => {
           done();
         });
     });
+    it('should return status 404 when trying to update a rogue document', (done) => {
+      requester.put('/documents/2000')
+        .set({ 'access-token': adminUserToken })
+        .send({ access: 'private' })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
     it('should ensure a user can update his own document', (done) => {
       requester.put(`/documents/${regularUserDocument.id}`)
         .set({ 'access-token': regularUserToken })
         .send({ access: 'public' })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });
@@ -83,7 +91,7 @@ describe('Document Route', () => {
         .set({ 'access-token': adminUserToken })
         .send({ access: 'private' })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });
@@ -179,11 +187,19 @@ describe('Document Route', () => {
           done();
         });
     });
+    it('should return 404 error when trying to delete a rogue document', (done) => {
+      requester.delete('/documents/7000')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
     it('should allow a user delete his document', (done) => {
       requester.delete(`/documents/${regularUserDocument.id}`)
         .set({ 'access-token': regularUserToken })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });
@@ -191,7 +207,7 @@ describe('Document Route', () => {
       requester.delete('/documents/7')
         .set({ 'access-token': adminUserToken })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });

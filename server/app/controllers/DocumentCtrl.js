@@ -1,5 +1,6 @@
 import db from '../models/index';
 import * as auth from '../helpers/AuthHelper';
+import reply from './../helpers/ResponseSender';
 
 /**
  * createDocument
@@ -8,7 +9,7 @@ import * as auth from '../helpers/AuthHelper';
  * @param {Object} res The Response from the server
  * @return {undefined}
  */
-const createDocument = (req, res) => {
+const createDocument = (req, res) =>
   db.Documents
     .create({
       title: req.body.title,
@@ -16,9 +17,12 @@ const createDocument = (req, res) => {
       owner: req.user.userId,
       access: req.body.access || 'public'
     })
-    .then(document => res.status(201).json({ message: 'Document Created', document }))
-    .catch(error => res.status(500).json({ message: 'Error Creating Document', error }));
-};
+    .then((data) => {
+      reply.messageContentCreated(res, 'document created', data);
+    })
+    .catch((error) => {
+      reply.messageServerError(res, 'unable to process request', error);
+    });
 
 /**
  * getDocuments
@@ -29,24 +33,18 @@ const createDocument = (req, res) => {
  */
 const getDocuments = (req, res) => {
   if (!auth.userIsAdmin(req.user.role)) {
-    return res.status(403).send({
-      message: 'unauthorized access'
-    });
+    return reply.messageAuthorizedAccess(res);
   }
-  db.Documents
+  return db.Documents
     .findAll()
     .then((data) => {
       if (data.length) {
-        return res.status(200).send(data);
+        return reply.messageOkSendData(res, data);
       }
-      return res.status(404).send({
-        message: 'Unable to fetch document'
-      });
+      reply.messageNotFound(res, 'no documents');
     })
     .catch((error) => {
-      res.status(400).send({
-        message: error
-      });
+      reply.messageServerError(res, 'unable to process request', error);
     });
 };
 
@@ -59,29 +57,23 @@ const getDocuments = (req, res) => {
  */
 const findDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
-  db.Documents
+  return db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
       if (data) {
         if (auth.userIsAdmin(req.user.role)
           || String(data.owner) === String(req.user.userId)
           || data.access === 'public') {
-          res.status(200).send(data);
+          reply.messageOkSendData(res, data);
         } else {
-          return res.status(403).send({
-            message: 'unauthorized access'
-          });
+          return reply.messageAuthorizedAccess(res);
         }
       } else {
-        res.status(404).send({
-          message: 'Document does not exist'
-        });
+        reply.messageNotFound(res, 'document does not exist');
       }
     })
     .catch((error) => {
-      res.status(400).send({
-        message: error.message
-      });
+      reply.messageServerError(res, 'unable to process request', error);
     });
 };
 
@@ -94,40 +86,25 @@ const findDocumentById = (req, res) => {
  */
 const updateDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
-  db.Documents
+  return db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
       if (!data) {
-        return res.status(404).json({
-          message: 'Document does not exist'
-        });
+        return reply.messageNotFound(res, 'document does not exist');
       }
       if (String(data.owner) === String(req.user.userId) ||
       auth.userIsAdmin(req.user.role)) {
-        data.update({
-          title: req.body.title || data.title,
-          content: req.body.content || data.content,
-          access: req.body.access || data.access,
-          owner: data.owner
-        })
+        req.body.id = undefined;
+        return data.update(req.body)
           .then((response) => {
-            res.status(201).json(response);
-          })
-          .catch((error) => {
-            res.status(400).json({
-              message: error.message
-            });
+            reply.messageOkSendData(res, response);
           });
-      } else {
-        res.status(403).json({
-          message: 'unauthorized access'
-        });
       }
+      reply.messageAuthorizedAccess(res);
     })
-    .catch(error =>
-      res.json({
-        message: error.message
-      }));
+    .catch((error) => {
+      reply.messageServerError(res, 'unable to process request', error);
+    });
 };
 
 /**
@@ -139,31 +116,23 @@ const updateDocumentById = (req, res) => {
  */
 const deleteDocumentById = (req, res) => {
   const requestedDocumentId = String(req.params.id);
-  db.Documents
+  return db.Documents
     .findById(requestedDocumentId)
     .then((data) => {
-      if (String(data.owner) === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
-        data.destroy()
-          .then(() => {
-            res.status(201).send({
-              message: 'Document has been deleted'
-            });
-          })
-          .catch((error) => {
-            res.status(400).send({
-              message: error.message
-            });
-          });
-      } else {
-        res.status(403).send({
-          message: 'unauthorized access'
-        });
+      if (!data) {
+        return reply.messageNotFound(res, 'document does not exist');
       }
+      if (String(data.owner) === String(req.user.userId) || auth.userIsAdmin(req.user.role)) {
+        return data.destroy()
+          .then(() => {
+            reply.messageDeleteSuccess(res, 'document deleted');
+          });
+      }
+      reply.messageAuthorizedAccess(res);
     })
-    .catch(error =>
-      res.send({
-        message: error.message
-      }));
+    .catch((error) => {
+      reply.messageServerError(res, 'unable to process request', error);
+    });
 };
 
 /**
@@ -207,26 +176,17 @@ const searchDocument = (req, res) => {
       }
     }
   };
-  db.Documents
+  return db.Documents
     .findAll(documentSearchQuery)
     .then((searchResult) => {
       if (searchResult.length) {
-        return res.status(200).json({
-          success: true,
-          searchResult
-        });
+        return reply.messageOkSendData(res, searchResult);
       }
-      return res.status(404).json({
-        success: true,
-        message: 'no result'
-      });
+      reply.messageNotFound(res, `no documents matching ${searchTerm}`);
     })
-    .catch(error =>
-      res.status(500).json({
-        success: false,
-        message: error.message
-      })
-    );
+    .catch((error) => {
+      reply.messageServerError(res, 'unable to process request', error);
+    });
 };
 export {
   createDocument,
