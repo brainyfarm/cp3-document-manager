@@ -13,12 +13,12 @@ describe('Users Route', () => {
     requester.post('/users/login')
       .send({ email: sampleUserData.admin.email, password: defaultPassword })
       .end((error, response) => {
-        adminUserToken = response.body.token;
+        adminUserToken = response.body.data.token;
       });
     requester.post('/users/login')
       .send({ email: sampleUserData.regular.email, password: defaultPassword })
       .end((error, response) => {
-        regularUserToken = response.body.token;
+        regularUserToken = response.body.data.token;
         done();
       });
   });
@@ -68,12 +68,21 @@ describe('Users Route', () => {
     requester.get('/logout')
       .set({ 'access-token': adminUserToken })
       .end((error, response) => {
-        expect(response.status).to.equal(201);
+        expect(response.status).to.equal(200);
         done();
       });
   });
 
   describe('Find User', () => {
+    it('should disallow access to route when invalid token is supplied', (done) => {
+      requester.get('/users/1')
+        .set({ 'access-token': '78389hcjbhcjhdsfjhcdbscjbedsbcbjsd.djhfdsd' })
+        .end((error, response) => {
+          expect(response.status).to.equal(401);
+          done();
+        });
+    });
+
     it('should prevent a regular user from finding user by ID', (done) => {
       requester.get('/users/1')
         .set({ 'access-token': regularUserToken })
@@ -82,6 +91,16 @@ describe('Users Route', () => {
           done();
         });
     });
+
+    it('should return 404 error if user with supplied ID is not found', (done) => {
+      requester.get('/users/100000')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
+
     it('should allow an admin find a user by ID', (done) => {
       requester.get('/users/1')
         .set({ 'access-token': adminUserToken })
@@ -121,12 +140,21 @@ describe('Users Route', () => {
           done();
         });
     });
+    it('should prevent update of a rogue user\'s data', (done) => {
+      requester.put('/users/200000')
+        .set({ 'access-token': adminUserToken })
+        .send({ firstname: 'Chris' })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
     it('should allow a user update his own data', (done) => {
       requester.put('/users/2')
         .set({ 'access-token': regularUserToken })
-        .send({ firstname: 'Chidi' })
+        .send({ firstname: 'Chidi', password: 'newpassword' })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });
@@ -135,7 +163,7 @@ describe('Users Route', () => {
         .set({ 'access-token': adminUserToken })
         .send({ firstname: 'Chris' })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });
@@ -162,7 +190,7 @@ describe('Users Route', () => {
       requester.delete('/users/4')
         .set({ 'access-token': adminUserToken })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });

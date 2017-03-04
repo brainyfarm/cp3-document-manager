@@ -13,12 +13,12 @@ describe('Roles Route', () => {
     requester.post('/users/login')
       .send({ email: sampleUserData.admin.email, password: defaultPassword })
       .end((error, response) => {
-        adminUserToken = response.body.token;
+        adminUserToken = response.body.data.token;
       });
     requester.post('/users/login')
       .send({ email: sampleUserData.regular.email, password: defaultPassword })
       .end((error, response) => {
-        regularUserToken = response.body.token;
+        regularUserToken = response.body.data.token;
         done();
       });
   });
@@ -73,10 +73,10 @@ describe('Roles Route', () => {
         });
     });
     it('should ensures an admin is able to delete an existing role', (done) => {
-      requester.delete('/roles/4')
+      requester.delete('/roles/3')
         .set({ 'access-token': adminUserToken })
         .end((error, response) => {
-          expect(response.status).to.equal(201);
+          expect(response.status).to.equal(200);
           done();
         });
     });
