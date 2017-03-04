@@ -16,7 +16,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 /* Home Route */
-app.use('/', (req, res) => {
+app.get('/', (req, res) => {
   res.status(200).json({
     message: 'Epic Document Manager API',
     apiDocumentation: 'https://github.com/andela-oakinseye/cp3-document-manager',
