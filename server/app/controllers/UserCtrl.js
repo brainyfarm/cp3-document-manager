@@ -8,6 +8,21 @@ import reply from './../helpers/ResponseSender';
 const secret = process.env.SECRET || 'secret';
 
 /**
+ * welcome
+ * Display a welcome message
+ * @param {Object} req The request object
+ * @param {Object} res The response from the server
+ * @return {undefined}
+ */
+const welcome = (req, res) => {
+  res.status(200).json({
+    message: 'Epic Document Manager API',
+    apiDocumentation: 'https://github.com/andela-oakinseye/cp3-document-manager',
+    postmanCollection: 'https://www.getpostman.com/collections/461ad21b114af8ccd66c'
+  });
+};
+
+/**
  * userLogin
  * Login a user
  * @param {Object} req The Request object
@@ -37,6 +52,32 @@ const userLogin = (req, res) =>
     }
     reply.messageAuthorizedAccess(res);
   });
+
+/**
+ * userLogout
+ * Blacklist an authentication token
+ * @param {Object} req The Request Object
+ * @param {Object} res The Response Object
+ * @return {undefined}
+ */
+const userLogout = (req, res) => {
+  const token = req.headers['access-token'] || req.body.token || req.params.token;
+  if (!token) {
+    return reply.messageTokenIssue(res, 'you are not logged in');
+  }
+  return db.Blacklists
+    .create({
+      token
+    })
+    .then(() =>
+      res.status(200).send({
+        success: true,
+        message: 'You have been logged out successfully'
+      }))
+    .catch((error) => {
+      reply.messageServerError(res, 'cannot process request', error);
+    });
+};
 
 /**
  * createUser
@@ -247,7 +288,9 @@ const searchUsers = (req, res) => {
 };
 
 export {
+  welcome,
   userLogin,
+  userLogout,
   createUser,
   getUsers,
   findUserById,
