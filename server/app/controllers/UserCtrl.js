@@ -41,7 +41,11 @@ const userLogin = (req, res) =>
       return reply.messageAuthorizedAccess(res, 'no such user');
     }
     if (bcrypt.compareSync(req.body.password, user.password)) {
-      const token = jwt.sign(user.get({ plain: true }), 'secret', {
+      const userData = {
+        id: user.id,
+        role: user.role
+      };
+      const token = jwt.sign(userData, secret, {
         expiresIn: '14 days'
       });
       return reply.messageOkSendData(res, {

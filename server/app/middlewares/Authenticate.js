@@ -19,12 +19,10 @@ const authenticate = (req, res, next) => {
         }
         jwt.verify(requestToken, secret, (error, decoded) => {
           if (!error) {
-            const username = decoded.username;
-            const firstname = decoded.firstname;
             const userId = decoded.id;
             const role = decoded.role;
 
-            req.user = { userId, username, role, firstname };
+            req.user = { userId, role };
             return next();
           }
           reply.messageTokenIssue(res, error.message);
