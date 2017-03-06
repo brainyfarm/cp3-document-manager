@@ -6,7 +6,7 @@ import { sampleUserData, defaultPassword } from '../TestHelper';
 const requester = request.agent(app);
 const expect = chai.expect;
 
-describe('Document Route', () => {
+describe('Documents', () => {
   let regularUserToken;
   let adminUserToken;
   let regularUserDocument;

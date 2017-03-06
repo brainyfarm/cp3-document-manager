@@ -6,7 +6,7 @@ import { sampleUserData, defaultPassword } from '../TestHelper';
 const requester = request.agent(app);
 const expect = chai.expect;
 
-describe('Users Route', () => {
+describe('Users', () => {
   let regularUserToken;
   let adminUserToken;
   before((done) => {
@@ -21,6 +21,15 @@ describe('Users Route', () => {
         regularUserToken = response.body.data.token;
         done();
       });
+  });
+  describe('/', () => {
+    it('should ensure that default route is accessible ', (done) => {
+      requester.get('/')
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          done();
+        });
+    });
   });
   describe('Authenticate', () => {
     it('should return status code 201 on signup success', (done) => {
@@ -59,14 +68,6 @@ describe('Users Route', () => {
   it('should return a token when a user signs in successfully', (done) => {
     requester.post('/users/login')
       .send({ email: sampleUserData.admin.email, password: defaultPassword })
-      .end((error, response) => {
-        expect(response.status).to.equal(200);
-        done();
-      });
-  });
-  it('should allow a user logout of a session', (done) => {
-    requester.get('/logout')
-      .set({ 'access-token': adminUserToken })
       .end((error, response) => {
         expect(response.status).to.equal(200);
         done();
@@ -242,10 +243,37 @@ describe('Users Route', () => {
         });
     });
     it('should allow a regular user get a list of another\'s public document', (done) => {
-      requester.get('/users/2/documents')
+      requester.get('/users/3/documents')
         .set({ 'access-token': regularUserToken })
         .end((error, response) => {
+          expect(response.status).to.equal(404);
+          done();
+        });
+    });
+  });
+
+  describe('Logout', () => {
+    it('should prevent redundant logout attempt', (done) => {
+      requester.get('/logout')
+        .end((error, response) => {
+          expect(response.status).to.equal(401);
+          done();
+        });
+    });
+
+    it('should allow a user logout of a session', (done) => {
+      requester.get('/logout')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
           expect(response.status).to.equal(200);
+          done();
+        });
+    });
+    it('should prevent use of already blacklisted', (done) => {
+      requester.get('/users')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(401);
           done();
         });
     });
