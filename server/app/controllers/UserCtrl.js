@@ -1,11 +1,17 @@
 import bcrypt from 'bcrypt-nodejs';
 import * as jwt from 'jsonwebtoken';
+import Cryptr from 'cryptr';
 
 import * as auth from '../helpers/AuthHelper';
 import db from '../models/index';
 import reply from './../helpers/ResponseSender';
 
 const secret = process.env.SECRET || 'secret';
+const encryptionKey = process.env.ENCRYPT_KEY || '{|-_-|}';
+const cryptr = new Cryptr(encryptionKey);
+
+const encrypt = cryptr.encrypt;
+const random = Math.random;
 
 /**
  * welcome
@@ -41,16 +47,17 @@ const userLogin = (req, res) =>
       return reply.messageAuthorizedAccess(res, 'no such user');
     }
     if (bcrypt.compareSync(req.body.password, user.password)) {
+      const randomValue = encrypt(random() * 300);
+      const randomValue2 = encrypt(random() * 101);
       const userData = {
-        id: user.id,
-        role: user.role
+        [encrypt(user.id)]: randomValue,
+        [encrypt(user.role)]: randomValue2
       };
       const token = jwt.sign(userData, secret, {
         expiresIn: '14 days'
       });
       return reply.messageOkSendData(res, {
         email: user.email,
-        userId: user.id,
         token
       });
     }
@@ -100,12 +107,17 @@ const createUser = (req, res) =>
       lastname: req.body.lastname
     })
     .then((user) => {
-      const token = jwt.sign(user.get({ plain: true }), secret, {
+      const randomValue = encrypt(random() * 300);
+      const randomValue2 = encrypt(random() * 101);
+      const userData = {
+        [encrypt(user.id)]: randomValue,
+        [encrypt(user.role)]: randomValue2
+      };
+      const token = jwt.sign(userData, secret, {
         expiresIn: '14 days'
       });
       return reply.messageContentCreated(res, 'user account created', {
         email: user.email,
-        roleId: user.role,
         token
       });
     }).catch((error) => {
