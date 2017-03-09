@@ -37,7 +37,7 @@ describe('Documents', () => {
         .end((error, response) => {
           expect(response.status).to.equal(401);
           expect(response.body.success).to.be.false;
-          expect(response.body.message).to.equal('check access token');
+          expect(response.body.message).to.equal('you are not logged in');
           done();
         });
     });
@@ -45,6 +45,17 @@ describe('Documents', () => {
       requester.post('/documents')
         .set({ 'access-token': regularUserToken })
         .send(sampleUserData.documentWithNoTitle)
+        .end((error, response) => {
+          expect(response.status).to.equal(400);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('ensure you supply title and content');
+          done();
+        });
+    });
+    it('should prevent user from creating documents if content is not supplied', (done) => {
+      requester.post('/documents')
+        .set({ 'access-token': regularUserToken })
+        .send({ title: 'Random Document Title' })
         .end((error, response) => {
           expect(response.status).to.equal(400);
           expect(response.body.success).to.be.false;
@@ -154,6 +165,16 @@ describe('Documents', () => {
           done();
         });
     });
+    it('should ensure a user is able to view another\'s public document', (done) => {
+      requester.get('/documents/5')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.data.title).to.equal('Lord of the Rings');
+          done();
+        });
+    });
     it('should ensure a user is able to view his document', (done) => {
       requester.get('/documents/2')
         .set({ 'access-token': regularUserToken })
@@ -237,6 +258,16 @@ describe('Documents', () => {
           expect(response.status).to.equal(404);
           expect(response.body.success).to.be.false;
           expect(response.body.message).to.equal('no documents matching abracadabra');
+          done();
+        });
+    });
+    it('should ensure that search query is sanitised', (done) => {
+      requester.get('/documents/search?query=Ali@@@@$$####ce')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.data.count).to.equal(2);
           done();
         });
     });
