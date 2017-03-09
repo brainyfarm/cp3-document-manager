@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import request from 'supertest';
 import chai from 'chai';
 import app from '../../config/app';
@@ -30,15 +31,30 @@ describe('Roles', () => {
         .send({ title: 'User Created Role' })
         .end((error, response) => {
           expect(response.status).to.equal(403);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('unauthorised access');
+          done();
+        });
+    });
+    it('should prevent a creation of role if title is not supplied', (done) => {
+      requester.post('/roles')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(400);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('supply role title');
           done();
         });
     });
     it('should ensures an admin is able to create a new role', (done) => {
       requester.post('/roles')
         .set({ 'access-token': adminUserToken })
-        .send({ title: 'User Created Role' })
+        .send({ title: 'Newly Created Role' })
         .end((error, response) => {
           expect(response.status).to.equal(201);
+          expect(response.body.success).to.be.true;
+          expect(response.body.message).to.equal('new role created');
+          expect(response.body.data.title).to.equal('Newly Created Role');
           done();
         });
     });
@@ -50,6 +66,8 @@ describe('Roles', () => {
         .set({ 'access-token': regularUserToken })
         .end((error, response) => {
           expect(response.status).to.equal(403);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('unauthorised access');
           done();
         });
     });
@@ -58,6 +76,94 @@ describe('Roles', () => {
         .set({ 'access-token': adminUserToken })
         .end((error, response) => {
           expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.data.length).to.be.greaterThan(1);
+          done();
+        });
+    });
+    it('should prevent a regular user from getting role by ID', (done) => {
+      requester.get('/roles/2')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('unauthorised access');
+          done();
+        });
+    });
+    it('should ensure an admin can get role by ID', (done) => {
+      requester.get('/roles/2')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.data.title).to.equal('Admin');
+          done();
+        });
+    });
+    it('should fail to get role if supplied ID invalid', (done) => {
+      requester.get('/roles/noANumber')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(400);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('invalid id');
+          done();
+        });
+    });
+    it('should return 404 error if role with supplied ID is not found', (done) => {
+      requester.get('/roles/2000')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('role does not exist');
+          done();
+        });
+    });
+  });
+
+  describe('Update Role', () => {
+    it('should prevent a regular user from updating roles', (done) => {
+      requester.put('/roles/3')
+        .set({ 'access-token': regularUserToken })
+        .send({ title: 'Updated Role title' })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('unauthorised access');
+          done();
+        });
+    });
+    it('should prevent update of inexistent roles', (done) => {
+      requester.put('/roles/3000')
+        .set({ 'access-token': adminUserToken })
+        .send({ title: 'Updated Role title' })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('invalid role id');
+          done();
+        });
+    });
+    it('should prevent update if title is not supplied', (done) => {
+      requester.put('/roles/4')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(400);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('supply role title');
+          done();
+        });
+    });
+    it('should ensure an admin can update a role', (done) => {
+      requester.put('/roles/4')
+        .set({ 'access-token': adminUserToken })
+        .send({ title: 'Updated Role Title' })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.data.title).to.equal('Updated Role Title');
           done();
         });
     });
@@ -69,6 +175,18 @@ describe('Roles', () => {
         .set({ 'access-token': regularUserToken })
         .end((error, response) => {
           expect(response.status).to.equal(403);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('unauthorised access');
+          done();
+        });
+    });
+    it('should prevent deletion of inexistent role', (done) => {
+      requester.delete('/roles/30000')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('invalid role id');
           done();
         });
     });
@@ -77,6 +195,8 @@ describe('Roles', () => {
         .set({ 'access-token': adminUserToken })
         .end((error, response) => {
           expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.message).to.equal('role deleted');
           done();
         });
     });

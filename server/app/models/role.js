@@ -1,7 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
   const Roles = sequelize.define('Roles', {
     title: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
     }
   }, {
       classMethods: {

@@ -12,7 +12,7 @@ const decrypt = cryptr.decrypt;
 const secret = process.env.SECRET || 'secret';
 const authenticate = (req, res, next) => {
   if (!req.headers['access-token'] && !req.body.token && !req.query.token) {
-    reply.messageTokenIssue(res, 'check access token');
+    reply.messageTokenIssue(res, 'you are not logged in');
   } else {
     const requestToken = req.headers['access-token'] || req.body.token || req.query.token;
     db.Blacklists.findOne({

@@ -146,7 +146,8 @@ Endpoint for Users API.
 - Status: `200: OK`
 - Body `(application/json)`
 ```json
-[{
+[
+  {
     "id": 4,
     "username": "Vernon_Reichert66",
     "firstname": "Isaac",
@@ -200,7 +201,8 @@ Endpoint for Users API.
     "role": 1,
     "createdAt": "2017-02-28T09:55:06.836Z",
     "updatedAt": "2017-02-28T09:55:06.836Z"
-  }]
+  }
+   ]
 ```
 
 ## Documents
@@ -216,7 +218,8 @@ Endpoint for document API.
 - Status: `200: OK`
 - Body `(application/json)`
 ```json
-[{
+[
+  {
     "id": 1,
     "owner": "2",
     "title": "My Document",
@@ -242,7 +245,8 @@ Endpoint for document API.
     "access": "private",
     "createdAt": "2017-02-28T04:55:13.608Z",
     "updatedAt": "2017-02-28T04:55:13.608Z"
-  }]
+  }
+   ]
 ```
 
 ### Create Document
@@ -355,7 +359,7 @@ Endpoint for document API.
 ```json
 {
   "success": true,
-  "searchResult": [
+  "data": [
     {
       "id": 2,
       "owner": "5",
@@ -390,7 +394,7 @@ Endpoint for document API.
 ```json
 {
   "success": true,
-  "searchResult": [
+  "data": [
     {
       "id": 1,
       "username": "admin",
