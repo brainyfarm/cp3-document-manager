@@ -11,7 +11,8 @@ roleRoutes.route('/')
 
 roleRoutes.route('/:id')
   .delete(authenticate, roleCtrl.deleteRoleById)
-  .put(authenticate, roleCtrl.updateRoleById);
+  .put(authenticate, roleCtrl.updateRoleById)
+  .get(authenticate, roleCtrl.getRoleById);
 
 
 export default roleRoutes;

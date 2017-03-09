@@ -1,6 +1,7 @@
 import db from '../models/index';
 import * as auth from '../helpers/AuthHelper';
 import reply from './../helpers/ResponseSender';
+import * as helper from './../helpers/ControllerHelper';
 
 /**
  * createRole
@@ -98,10 +99,43 @@ const getAllRoles = (req, res) => {
   return reply.messageAuthorizedAccess(res);
 };
 
+/**
+ * getRolesById
+ * Fetch and return a specified role
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
+/**
+ * findUserById
+ * Fetch and return a specific user's data
+ * @param {Object} req The Request object
+ * @param {Object} res The Response from the server
+ * @return {undefined}
+ */
+const getRoleById = (req, res) => {
+  const dataId = req.params.id;
+  if (helper.idIsBad(dataId)) {
+    return reply.messageBadRequest(res, 'invalid id');
+  }
+  if (!auth.userIsAdmin(req.user.role)) {
+    return reply.messageAuthorizedAccess(res);
+  }
+  return db.Roles
+    .findById(dataId)
+    .then((data) => {
+      if (!data) {
+        return reply.messageNotFound(res, 'role does not exist');
+      }
+      reply.messageOkSendData(res, data);
+    });
+};
+
 
 export {
   createRole,
   updateRoleById,
   deleteRoleById,
-  getAllRoles
+  getAllRoles,
+  getRoleById
 };

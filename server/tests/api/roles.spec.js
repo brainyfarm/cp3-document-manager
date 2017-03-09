@@ -81,6 +81,46 @@ describe('Roles', () => {
           done();
         });
     });
+    it('should prevent a regular user from getting role by ID', (done) => {
+      requester.get('/roles/2')
+        .set({ 'access-token': regularUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(403);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('unauthorised access');
+          done();
+        });
+    });
+    it('should ensure an admin can get role by ID', (done) => {
+      requester.get('/roles/2')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(200);
+          expect(response.body.success).to.be.true;
+          expect(response.body.data.title).to.equal('Admin');
+          done();
+        });
+    });
+    it('should fail to get role if supplied ID invalid', (done) => {
+      requester.get('/roles/noANumber')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(400);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('invalid id');
+          done();
+        });
+    });
+    it('should return 404 error if role with supplied ID is not found', (done) => {
+      requester.get('/roles/2000')
+        .set({ 'access-token': adminUserToken })
+        .end((error, response) => {
+          expect(response.status).to.equal(404);
+          expect(response.body.success).to.be.false;
+          expect(response.body.message).to.equal('role does not exist');
+          done();
+        });
+    });
   });
 
   describe('Update Role', () => {
