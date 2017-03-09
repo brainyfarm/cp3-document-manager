@@ -200,41 +200,41 @@ const searchDocument = (req, res) => {
     return reply.messageBadRequest(res, 'include a search term');
   }
   const documentSearchQuery = auth.userIsAdmin(req.user.role) ?
-    {
-      limit,
-      offset,
-      where: {
-        $or: {
-          title: {
-            $iLike: `%${searchTerm}%`
-          },
-          content: {
-            $iLike: `%${searchTerm}%`
-          }
+  {
+    limit,
+    offset,
+    where: {
+      $or: {
+        title: {
+          $iLike: `%${searchTerm}%`
+        },
+        content: {
+          $iLike: `%${searchTerm}%`
         }
       }
-    } : {
-      limit,
-      offset,
-      where: {
+    }
+  } : {
+    limit,
+    offset,
+    where: {
+      $and: {
+        $or: {
+          owner: String(req.user.userId),
+          access: 'public'
+        },
         $and: {
           $or: {
-            owner: String(req.user.userId),
-            access: 'public'
-          },
-          $and: {
-            $or: {
-              title: {
-                $iLike: `%${searchTerm}%`
-              },
-              content: {
-                $iLike: `%${searchTerm}%`
-              }
+            title: {
+              $iLike: `%${searchTerm}%`
+            },
+            content: {
+              $iLike: `%${searchTerm}%`
             }
           }
         }
       }
-    };
+    }
+  };
   return db.Documents
     .findAndCountAll(documentSearchQuery)
     .then((result) => {
