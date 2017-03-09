@@ -1,6 +1,7 @@
 import db from '../models/index';
 import * as auth from '../helpers/AuthHelper';
 import reply from './../helpers/ResponseSender';
+import * as helper from './../helpers/ControllerHelper';
 
 /**
  * createDocument
@@ -9,21 +10,41 @@ import reply from './../helpers/ResponseSender';
  * @param {Object} res The Response from the server
  * @return {undefined}
  */
-const createDocument = (req, res) =>
-  db.Documents
-    .create({
-      title: req.body.title,
-      content: req.body.content,
-      owner: req.user.userId,
-      access: req.body.access || 'public'
-    })
-    .then((data) => {
-      reply.messageContentCreated(res, 'document created', data);
-    })
-    .catch((error) => {
-      reply.messageServerError(res, 'unable to process request', error);
-    });
+const createDocument = (req, res) => {
+  const title = req.body.title;
+  const content = req.body.content;
 
+  if (!title || !content) {
+    return reply.messageBadRequest(res, 'ensure you supply title and content');
+  }
+  db.Documents
+    .findOne({
+      where: {
+        title
+      }
+    })
+    .then((response) => {
+      if (response) {
+        return res.status(409).json({
+          success: false,
+          message: 'a document with this title exists'
+        });
+      }
+      db.Documents
+        .create({
+          title,
+          content,
+          owner: req.user.userId,
+          access: req.body.access || 'public'
+        })
+        .then((data) => {
+          reply.messageContentCreated(res, 'document created', data);
+        })
+        .catch(() => {
+          reply.messageServerError(res, 'unable to process request');
+        });
+    });
+};
 /**
  * getDocuments
  * Fetch and return all documents in the database
@@ -32,19 +53,38 @@ const createDocument = (req, res) =>
  * @return {undefined}
  */
 const getDocuments = (req, res) => {
-  if (!auth.userIsAdmin(req.user.role)) {
-    return reply.messageAuthorizedAccess(res);
+  if (helper.isBadPageQuery(helper.getPageQueries(req))) {
+    return reply.messageBadRequest(res, 'check page queries');
   }
+  const pageData = helper.getPageData(req, res);
+  const limit = pageData.limit;
+  const offset = pageData.offset;
+  const order = pageData.order;
+
+  const documentSearchQuery = auth.userIsAdmin(req.user.role) ?
+    { limit, offset, order } : {
+      limit,
+      offset,
+      order,
+      where: {
+        $or: {
+          owner: String(req.user.userId), access: 'public'
+        }
+      }
+    };
   return db.Documents
-    .findAll()
-    .then((data) => {
-      if (data.length) {
-        return reply.messageOkSendData(res, data);
+    .findAndCountAll(documentSearchQuery)
+    .then((result) => {
+      if (result.count) {
+        const metaData = helper.getPageMetaData(req, result, offset, limit);
+        result.currentPage = metaData.currentPage;
+        result.totalPages = metaData.numberOfPages;
+        return reply.messageOkSendData(res, result);
       }
       reply.messageNotFound(res, 'no documents');
     })
-    .catch((error) => {
-      reply.messageServerError(res, 'unable to process request', error);
+    .catch(() => {
+      reply.messageServerError(res, 'unable to process request');
     });
 };
 
@@ -72,8 +112,8 @@ const findDocumentById = (req, res) => {
         reply.messageNotFound(res, 'document does not exist');
       }
     })
-    .catch((error) => {
-      reply.messageServerError(res, 'unable to process request', error);
+    .catch(() => {
+      reply.messageServerError(res, 'unable to process request');
     });
 };
 
@@ -93,8 +133,11 @@ const updateDocumentById = (req, res) => {
         return reply.messageNotFound(res, 'document does not exist');
       }
       if (String(data.owner) === String(req.user.userId) ||
-      auth.userIsAdmin(req.user.role)) {
+        auth.userIsAdmin(req.user.role)) {
         req.body.id = undefined;
+        if (!req.body.title && !req.body.content && !req.body.access) {
+          return reply.messageBadRequest(res, 'specify title, content or access');
+        }
         return data.update(req.body)
           .then((response) => {
             reply.messageOkSendData(res, response);
@@ -102,8 +145,8 @@ const updateDocumentById = (req, res) => {
       }
       reply.messageAuthorizedAccess(res);
     })
-    .catch((error) => {
-      reply.messageServerError(res, 'unable to process request', error);
+    .catch(() => {
+      reply.messageServerError(res, 'unable to process request');
     });
 };
 
@@ -143,44 +186,63 @@ const deleteDocumentById = (req, res) => {
  * @return {undefined}
  */
 const searchDocument = (req, res) => {
-  const searchTerm = req.params.searchterm;
+  if (helper.isBadPageQuery(helper.getPageQueries(req))) {
+    return reply.messageBadRequest(res, 'check page queries');
+  }
+  const pageData = helper.getPageData(req, res);
+  const limit = pageData.limit;
+  const offset = pageData.offset;
+
+  let searchTerm;
+  if (req.query.query) {
+    searchTerm = req.query.query.replace(/[^a-z0-9]/gi, '');
+  } else {
+    return reply.messageBadRequest(res, 'include a search term');
+  }
   const documentSearchQuery = auth.userIsAdmin(req.user.role) ?
-  {
-    where: {
-      $or: {
-        title: {
-          $iLike: `%${searchTerm}%`
-        },
-        content: {
-          $iLike: `%${searchTerm}%`
+    {
+      limit,
+      offset,
+      where: {
+        $or: {
+          title: {
+            $iLike: `%${searchTerm}%`
+          },
+          content: {
+            $iLike: `%${searchTerm}%`
+          }
         }
       }
-    }
-  } : {
-    where: {
-      $and: {
-        $or: {
-          owner: String(req.user.userId),
-          access: 'public'
-        },
+    } : {
+      limit,
+      offset,
+      where: {
         $and: {
           $or: {
-            title: {
-              $iLike: `%${searchTerm}%`
-            },
-            content: {
-              $iLike: `%${searchTerm}%`
+            owner: String(req.user.userId),
+            access: 'public'
+          },
+          $and: {
+            $or: {
+              title: {
+                $iLike: `%${searchTerm}%`
+              },
+              content: {
+                $iLike: `%${searchTerm}%`
+              }
             }
           }
         }
       }
-    }
-  };
+    };
   return db.Documents
-    .findAll(documentSearchQuery)
-    .then((searchResult) => {
-      if (searchResult.length) {
-        return reply.messageOkSendData(res, searchResult);
+    .findAndCountAll(documentSearchQuery)
+    .then((result) => {
+      if (result.count) {
+        const metaData = helper.getPageMetaData(req, result, offset, limit);
+        result.currentPage = metaData.currentPage;
+        result.totalPages = metaData.numberOfPages;
+        return reply.messageOkSendData(res, result);
       }
       reply.messageNotFound(res, `no documents matching ${searchTerm}`);
     })

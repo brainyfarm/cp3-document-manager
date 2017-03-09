@@ -5,6 +5,7 @@ import Cryptr from 'cryptr';
 import * as auth from '../helpers/AuthHelper';
 import db from '../models/index';
 import reply from './../helpers/ResponseSender';
+import * as helper from './../helpers/ControllerHelper';
 
 const secret = process.env.SECRET || 'secret';
 const encryptionKey = process.env.ENCRYPT_KEY || '{|-_-|}';
@@ -35,11 +36,17 @@ const welcome = (req, res) => {
  * @param {Object} res The Response from the server
  * @return {undefined}
  */
-const userLogin = (req, res) =>
+const userLogin = (req, res) => {
+  const email = req.body.email;
+  const username = req.body.username;
+  const password = req.body.password;
+  if ((!username && !email) || !password) {
+    return reply.messageBadRequest(res, 'supply all necessary fields');
+  }
   db.Users.findOne({
     where: {
       $or: {
-        username: req.body.username, email: req.body.email
+        username, email
       }
     }
   }).then((user) => {
@@ -63,7 +70,7 @@ const userLogin = (req, res) =>
     }
     reply.messageAuthorizedAccess(res);
   });
-
+};
 /**
  * userLogout
  * Blacklist an authentication token
@@ -81,12 +88,12 @@ const userLogout = (req, res) => {
       token
     })
     .then(() =>
-      res.status(200).send({
+      res.status(200).json({
         success: true,
         message: 'You have been logged out successfully'
       }))
-    .catch((error) => {
-      reply.messageServerError(res, 'cannot process request', error);
+    .catch(() => {
+      reply.messageServerError(res, 'cannot process request');
     });
 };
 
@@ -97,32 +104,57 @@ const userLogout = (req, res) => {
  * @param {Object} res The Response from the server
  * @return {undefined}
  */
-const createUser = (req, res) =>
+const createUser = (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  const email = req.body.email;
+  const firstname = req.body.firstname;
+  const lastname = req.body.lastname;
+  if (!username || !password || !email || !firstname || !lastname) {
+    return reply.messageBadRequest(res, 'supply all necessary field');
+  }
   db.Users
-    .create({
-      username: req.body.username,
-      password: req.body.password,
-      email: req.body.email,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname
+    .findOne({
+      where: {
+        $or: {
+          email, username
+        }
+      }
     })
-    .then((user) => {
-      const randomValue = encrypt(random() * 300);
-      const randomValue2 = encrypt(random() * 101);
-      const userData = {
-        [encrypt(user.id)]: randomValue,
-        [encrypt(user.role)]: randomValue2
-      };
-      const token = jwt.sign(userData, secret, {
-        expiresIn: '14 days'
-      });
-      return reply.messageContentCreated(res, 'user account created', {
-        email: user.email,
-        token
-      });
-    }).catch((error) => {
-      reply.messageServerError(res, 'unable to process request', error);
+    .then((data) => {
+      if (data) {
+        return res.status(409).json({
+          success: false,
+          message: 'user with email or username exist'
+        });
+      }
+      return db.Users
+        .create({
+          username: req.body.username,
+          password: req.body.password,
+          email: req.body.email,
+          firstname: req.body.firstname,
+          lastname: req.body.lastname
+        })
+        .then((user) => {
+          const randomValue = encrypt(random() * 300);
+          const randomValue2 = encrypt(random() * 101);
+          const userData = {
+            [encrypt(user.id)]: randomValue,
+            [encrypt(user.role)]: randomValue2
+          };
+          const token = jwt.sign(userData, secret, {
+            expiresIn: '14 days'
+          });
+          return reply.messageContentCreated(res, 'user account created', {
+            email: user.email,
+            token
+          });
+        }).catch(() => {
+          reply.messageServerError(res, 'unable to process request');
+        });
     });
+};
 
 /**
  * getUsers
@@ -132,14 +164,22 @@ const createUser = (req, res) =>
  * @return {undefined}
  */
 const getUsers = (req, res) => {
-  if (!auth.userIsAdmin(req.user.role)) {
-    return reply.messageAuthorizedAccess(res);
+  if (helper.isBadPageQuery(helper.getPageQueries(req))) {
+    return reply.messageBadRequest(res, 'check page queries');
   }
-  return db.Users.findAll()
-    .then((data) => {
-      if (data.length) {
-        return reply.messageOkSendData(res, data);
-      }
+  const pageData = helper.getPageData(req, res);
+  const limit = pageData.limit;
+  const offset = pageData.offset;
+  const order = pageData.order;
+
+  const query = auth.userIsAdmin(req.user.role) ? { limit, offset, order } :
+    { limit, offset, order, attributes: ['id', 'username', 'firstname', 'lastname'] };
+  return db.Users.findAndCountAll(query)
+    .then((result) => {
+      const metaData = helper.getPageMetaData(req, result, offset, limit);
+      result.currentPage = metaData.currentPage;
+      result.totalPages = metaData.numberOfPages;
+      reply.messageOkSendData(res, result);
     })
     .catch((error) => {
       reply.messageServerError(res, 'unable to process request', error);
@@ -155,11 +195,17 @@ const getUsers = (req, res) => {
  */
 const findUserById = (req, res) => {
   const dataId = req.params.id;
-  if (!auth.userHasPermission(req.user, dataId)) {
-    return reply.messageAuthorizedAccess(res, 'no permission to view');
+  if (helper.idIsBad(dataId)) {
+    return reply.messageBadRequest(res, 'invalid id');
   }
+  const query = auth.userIsAdmin(req.user.role) ? { where: { id: dataId } } : {
+    attributes: ['id', 'username', 'firstname', 'lastname'],
+    where: {
+      id: dataId
+    }
+  };
   return db.Users
-    .findById(dataId)
+    .findOne(query)
     .then((data) => {
       if (!data) {
         return reply.messageNotFound(res, 'user not found');
@@ -177,6 +223,9 @@ const findUserById = (req, res) => {
  */
 const updateUserData = (req, res) => {
   const dataId = req.params.id;
+  if (helper.idIsBad(dataId)) {
+    return reply.messageBadRequest(res, 'invalid id');
+  }
   if (!auth.userHasPermission(req.user, dataId)) {
     return reply.messageAuthorizedAccess(res);
   }
@@ -205,6 +254,9 @@ const updateUserData = (req, res) => {
  */
 const deleteUser = (req, res) => {
   const dataId = req.params.id;
+  if (helper.idIsBad(dataId)) {
+    return reply.messageBadRequest(res, 'invalid id');
+  }
   if (!auth.userHasPermission(req.user, dataId)) {
     return reply.messageAuthorizedAccess(res);
   }
@@ -228,36 +280,47 @@ const deleteUser = (req, res) => {
  * @return {undefined}
  */
 const getUserDocumentById = (req, res) => {
+  if (helper.isBadPageQuery(helper.getPageQueries(req))) {
+    return reply.messageBadRequest(res, 'check page queries');
+  }
+  const pageData = helper.getPageData(req, res);
+  const limit = pageData.limit;
+  const offset = pageData.offset;
+  const order = pageData.order;
+
   const userId = req.user.userId;
   const requestId = req.params.id;
-  const query = {
-    where: {
-      owner: requestId
-    }
-  };
-  if (String(userId) === String(requestId)
-    || auth.userIsAdmin(req.user.role)) {
-    return db.Documents
-      .findAll(query)
-      .then((data) => {
-        if (data.length) {
-          return reply.messageOkSendData(res, data);
-        }
-        reply.messageNotFound(res, 'user has no document');
-      });
+  if (helper.idIsBad(requestId)) {
+    return reply.messageBadRequest(res, 'invalid id');
   }
-  return db.Documents
-    .findAll({
+  const query = String(userId) === String(requestId)
+    || auth.userIsAdmin(req.user.role) ? {
+      limit,
+      offset,
+      order,
+      where: {
+        owner: requestId
+      }
+    } : {
+      limit,
+      offset,
+      order,
       where: {
         owner: requestId,
         $and: {
           access: 'public'
         }
       }
-    })
-    .then((data) => {
-      if (data.length) {
-        return reply.messageOkSendData(res, data);
+    };
+
+  return db.Documents
+    .findAndCountAll(query)
+    .then((result) => {
+      if (result.count) {
+        const metaData = helper.getPageMetaData(req, result, offset, limit);
+        result.currentPage = metaData.currentPage;
+        result.totalPages = metaData.numberOfPages;
+        return reply.messageOkSendData(res, result);
       }
       reply.messageNotFound(res, 'user has no document');
     });
@@ -271,13 +334,41 @@ const getUserDocumentById = (req, res) => {
  * @return {undefined}
  */
 const searchUsers = (req, res) => {
-  const searchTerm = req.params.searchTerm;
-  const userSearchQuery = {
+  if (helper.isBadPageQuery(helper.getPageQueries(req))) {
+    return reply.messageBadRequest(res, 'check page queries');
+  }
+  let searchTerm;
+  const pageData = helper.getPageData(req, res);
+  const limit = pageData.limit;
+  const offset = pageData.offset;
+  const order = '"firstname"';
+
+  if (req.query.query) {
+    searchTerm = helper.cleanSearchTerm(req.query.query);
+  } else {
+    return reply.messageBadRequest(res, 'include a search term');
+  }
+  const userSearchQuery = auth.userIsAdmin(req.user.role) ? {
+    limit,
+    offset,
+    order,
     where: {
       $or: {
-        lastname: {
+        firstname: {
           $ilike: `%${searchTerm}%`
         },
+        username: {
+          $ilike: `%${searchTerm}%`
+        }
+      }
+    }
+  } : {
+    limit,
+    offset,
+    order,
+    attributes: ['firstname', 'lastname', 'username'],
+    where: {
+      $or: {
         firstname: {
           $ilike: `%${searchTerm}%`
         },
@@ -287,14 +378,14 @@ const searchUsers = (req, res) => {
       }
     }
   };
-  if (!auth.userIsAdmin(req.user.role)) {
-    return reply.messageAuthorizedAccess(res);
-  }
   return db.Users
-    .findAll(userSearchQuery)
-    .then((searchResult) => {
-      if (searchResult.length) {
-        return reply.messageOkSendData(res, searchResult);
+    .findAndCountAll(userSearchQuery)
+    .then((result) => {
+      if (result.count) {
+        const metaData = helper.getPageMetaData(req, result, offset, limit);
+        result.currentPage = metaData.currentPage;
+        result.totalPages = metaData.numberOfPages;
+        return reply.messageOkSendData(res, result);
       }
       reply.messageNotFound(res, `no result found for ${searchTerm}`);
     })
