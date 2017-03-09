@@ -7,7 +7,7 @@
     "cover": "NODE_ENV=test istanbul cover _mocha -- server/tests/**/*.js --compilers js:babel-core/register",
     "heroku_build": "npm run migrate",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
-    "start": "babel-node server",
+    "start": "babel-node server.js",
     "migrate": "sequelize db:migrate",
     "generate:data": "NODE_ENV=test babel-node server/tests/SeedHelper",
     "test": "npm run generate:data && npm run coveralls"

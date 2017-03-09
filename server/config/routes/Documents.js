@@ -8,13 +8,15 @@ documentRoutes.route('/')
   .post(authenticate, documentCtrl.createDocument)
   .get(authenticate, documentCtrl.getDocuments);
 
+
+documentRoutes.route('/search')
+  .get(authenticate, documentCtrl.searchDocument);
+
 documentRoutes.route('/:id')
   .get(authenticate, documentCtrl.findDocumentById)
   .put(authenticate, documentCtrl.updateDocumentById)
   .delete(authenticate, documentCtrl.deleteDocumentById);
 
-documentRoutes.route('/search/:searchterm')
-  .get(authenticate, documentCtrl.searchDocument);
 
 export default documentRoutes;
 

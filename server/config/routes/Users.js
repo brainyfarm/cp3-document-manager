@@ -8,6 +8,9 @@ userRoutes.route('/')
   .post(userCtrl.createUser)
   .get(authenticate, userCtrl.getUsers);
 
+userRoutes.route('/search')
+  .get(authenticate, userCtrl.searchUsers);
+
 userRoutes.route('/:id')
   .get(authenticate, userCtrl.findUserById)
   .put(authenticate, userCtrl.updateUserData)
@@ -15,9 +18,6 @@ userRoutes.route('/:id')
 
 userRoutes.route('/:id/documents')
   .get(authenticate, userCtrl.getUserDocumentById);
-
-userRoutes.route('/search/:searchTerm')
-  .get(authenticate, userCtrl.searchUsers);
 
 userRoutes.route('/login')
   .post(userCtrl.userLogin);

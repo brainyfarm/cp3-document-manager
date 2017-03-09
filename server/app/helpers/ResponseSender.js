@@ -9,27 +9,23 @@ const responses = {
   messageAuthorizedAccess(response, scopeMessage) {
     response.status(403).json({
       success: false,
-      message: scopeMessage || 'unauthorized access'
+      message: scopeMessage || 'unauthorised access'
     });
   },
 
-  messageServerError(response, scopeMessage, error) {
+  messageServerError(response, scopeMessage) {
     response.status(500).json({
       success: false,
-      message: `${scopeMessage}`,
-      error: error.message
+      message: `${scopeMessage}`
     });
   },
 
-
-  messageBadRequest(response, scopeMessage, error) {
+  messageBadRequest(response, scopeMessage) {
     response.status(400).json({
       success: false,
-      message: `${scopeMessage}`,
-      error: error.message || 'misunderstood request'
+      message: scopeMessage
     });
   },
-
 
   messageNotFound(response, scopeMessage) {
     response.status(404).json({
@@ -57,6 +53,13 @@ const responses = {
     response.status(200).json({
       success: true,
       message: scopeMessage || 'content deleted'
+    });
+  },
+
+  messageUpdateSuccess(response, scopeMessage) {
+    response.status(200).json({
+      success: true,
+      message: scopeMessage || 'data update successful'
     });
   }
 };

@@ -12,11 +12,12 @@ module.exports = {
       },
       title: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true
       },
       content: {
-        type: Sequelize.STRING,
-        allowNull: false
+        type: Sequelize.TEXT,
+        allowNull: false,
       },
       access: {
         type: Sequelize.STRING,
